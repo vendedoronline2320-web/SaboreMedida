@@ -83,7 +83,12 @@ const App: React.FC = () => {
     setRecipes(updatedRecipes);
   };
 
-  
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
+      {view === 'landing' && (
+        <LandingPage
+          onStart={() => { setView('login'); setIsRegisteringMode(true); }}
+          onLogin={() => { setView('login'); setIsRegisteringMode(false); }}
         />
       )}
 
