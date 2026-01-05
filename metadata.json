@@ -1,0 +1,8 @@
+{
+  "name": "Sabor e Medida",
+  "description": "SaaS fitness focado em emagrecimento prazeroso através de substituições inteligentes e receitas deliciosas.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
