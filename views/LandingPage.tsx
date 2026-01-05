@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ChevronRight, CheckCircle, Play, Star, ShieldCheck, ArrowRight, Sparkles, Menu, X } from 'lucide-react';
+import { ChevronRight, CheckCircle, Play, Star, ShieldCheck, ArrowRight, Sparkles, Menu, X, Trophy } from 'lucide-react';
 import { TESTIMONIALS, FAQS } from '../constants';
 
 interface LandingPageProps {
@@ -402,21 +402,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
       </section>
 
       {/* Pricing Section */}
-      <section id="preços" className="py-32 bg-slate-50 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-100 to-transparent opacity-50"></div>
+      <section id="preços" className="py-32 bg-gradient-to-br from-emerald-50 via-white to-orange-50 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-white to-transparent"></div>
         <div className="max-w-7xl mx-auto px-6 lg:px-12 animate-appear">
           <div className="text-center mb-24">
-            <span className="text-emerald-600 font-black tracking-[0.3em] text-[10px] uppercase mb-4 block">TRANSFORMAÇÃO VITALÍCIA</span>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100/50 border border-emerald-200 text-emerald-700 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
+              <Sparkles size={12} /> Melhores Ofertas de 2026
+            </div>
             <h2 className="text-4xl md:text-6xl font-black text-slate-900 mb-6 tracking-tight">Investimento em Você</h2>
-            <p className="text-slate-500 text-xl max-w-2xl mx-auto font-medium">Escolha o caminho para sua melhor versão em 2026.</p>
+            <p className="text-slate-500 text-xl max-w-2xl mx-auto font-medium">Acesso vitalício para transformar seu corpo com inteligência.</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 lg:gap-12 max-w-5xl mx-auto items-center">
             {/* Plan 1 */}
-            <div className="bg-white p-12 rounded-[48px] border border-slate-200 hover:border-emerald-200 transition-all flex flex-col group relative shadow-sm hover:shadow-2xl">
-              <h3 className="text-2xl font-black text-slate-900 mb-2">Plano Essencial</h3>
-              <p className="text-slate-400 mb-10 font-bold text-sm">As 10 receitas fundamentais.</p>
+            <div className="bg-white/80 backdrop-blur-sm p-12 rounded-[56px] border border-white transition-all flex flex-col group relative shadow-xl hover:shadow-2xl hover:-translate-y-2">
               <div className="mb-10">
+                <h3 className="text-2xl font-black text-slate-900 mb-2">Plano Essencial</h3>
+                <p className="text-slate-400 font-bold text-sm">As 10 receitas fundamentais.</p>
+              </div>
+              <div className="mb-10 flex items-baseline">
                 <span className="text-6xl font-black text-slate-900">R$ 10</span>
                 <span className="text-slate-300 font-black ml-1 text-2xl">,00</span>
               </div>
@@ -432,27 +436,28 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
               </ul>
               <a
                 href="https://pay.cakto.com.br/sqpgdf5_711359"
-                rel="noopener noreferrer"
-                className="w-full py-6 rounded-3xl border-2 border-slate-100 text-slate-900 font-black hover:bg-slate-50 hover:border-slate-200 transition-all text-center block text-lg shadow-sm"
+                className="w-full py-6 rounded-3xl bg-slate-900 text-white font-black hover:bg-slate-800 transition-all text-center block text-lg shadow-xl"
               >
                 Selecionar Essencial
               </a>
             </div>
 
             {/* Plan 2 - DARK MODE PREMIUM */}
-            <div className="relative bg-[#0f172a] p-12 rounded-[48px] shadow-[0_48px_80px_-20px_rgba(16,185,129,0.3)] scale-105 z-10 flex flex-col border border-emerald-500/30">
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-8 py-2.5 rounded-full text-[11px] font-black uppercase tracking-[0.25em] shadow-xl shadow-emerald-500/20 whitespace-nowrap">👑 MAIS COMPRADO</div>
+            <div className="relative bg-[#0f172a] p-12 rounded-[56px] shadow-[0_60px_100px_-20px_rgba(16,185,129,0.4)] scale-105 z-10 flex flex-col border border-emerald-500/30 hover:-translate-y-2 transition-transform">
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-2.5 rounded-full text-[11px] font-black uppercase tracking-[0.25em] shadow-xl shadow-orange-500/20 whitespace-nowrap">� RECOMENDADO</div>
 
-              <div className="flex justify-between items-start mb-2">
+              <div className="flex justify-between items-start mb-10">
                 <div>
-                  <h3 className="text-3xl font-black text-white mb-1">Acesso Premium</h3>
-                  <p className="text-emerald-400/80 mb-10 font-bold text-sm">O método completo e atualizado.</p>
+                  <h3 className="text-3xl font-black text-white mb-2">Acesso Premium</h3>
+                  <p className="text-emerald-400/80 font-bold text-sm">O método completo e atualizado.</p>
                 </div>
-                <Sparkles className="text-emerald-400 animate-pulse" size={28} />
+                <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-emerald-400 border border-white/10">
+                  <Trophy size={28} />
+                </div>
               </div>
 
-              <div className="mb-10">
-                <span className="text-6xl font-black text-white">R$ 29</span>
+              <div className="mb-10 flex items-baseline">
+                <span className="text-7xl font-black text-white">R$ 29</span>
                 <span className="text-emerald-400 font-black ml-1 text-2xl">,90</span>
               </div>
 
@@ -474,8 +479,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
               </ul>
               <a
                 href="https://pay.cakto.com.br/yo5n39h_711365"
-                rel="noopener noreferrer"
-                className="hover-scale w-full py-6 rounded-3xl bg-emerald-500 text-white font-black premium-shadow hover:bg-emerald-600 transition-all text-center block text-xl shadow-[0_20px_40px_-10px_rgba(16,185,129,0.4)]"
+                className="w-full py-6 rounded-3xl bg-emerald-500 text-white font-black hover:bg-emerald-600 transition-all text-center block text-xl shadow-[0_20px_40px_-10px_rgba(16,185,129,0.4)]"
               >
                 Garantir Acesso Premium
               </a>
