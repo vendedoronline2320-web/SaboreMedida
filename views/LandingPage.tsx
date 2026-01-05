@@ -402,44 +402,61 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
       </section>
 
       {/* Pricing Section */}
-      <section id="preços" className="py-24 bg-white">
+      <section id="preços" className="py-32 bg-slate-50 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-100 to-transparent opacity-50"></div>
         <div className="max-w-7xl mx-auto px-6 lg:px-12 animate-appear">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">Investimento em Você</h2>
-            <p className="text-slate-500 text-lg max-w-2xl mx-auto">Acesso vitalício para você transformar seu corpo para sempre.</p>
+          <div className="text-center mb-24">
+            <span className="text-emerald-600 font-black tracking-[0.3em] text-[10px] uppercase mb-4 block">TRANSFORMAÇÃO VITALÍCIA</span>
+            <h2 className="text-4xl md:text-6xl font-black text-slate-900 mb-6 tracking-tight">Investimento em Você</h2>
+            <p className="text-slate-500 text-xl max-w-2xl mx-auto font-medium">Escolha o caminho para sua melhor versão em 2026.</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-10 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 max-w-5xl mx-auto items-center">
             {/* Plan 1 */}
-            <div className="bg-white p-10 rounded-[32px] border border-slate-200 hover:border-emerald-200 transition-all flex flex-col group">
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">Plano Essencial</h3>
-              <p className="text-slate-500 mb-8 font-medium">As 10 receitas fundamentais.</p>
-              <div className="mb-8">
-                <span className="text-5xl font-extrabold text-slate-900">R$ 10</span>
-                <span className="text-slate-400 font-bold ml-1">,00</span>
+            <div className="bg-white p-12 rounded-[48px] border border-slate-200 hover:border-emerald-200 transition-all flex flex-col group relative shadow-sm hover:shadow-2xl">
+              <h3 className="text-2xl font-black text-slate-900 mb-2">Plano Essencial</h3>
+              <p className="text-slate-400 mb-10 font-bold text-sm">As 10 receitas fundamentais.</p>
+              <div className="mb-10">
+                <span className="text-6xl font-black text-slate-900">R$ 10</span>
+                <span className="text-slate-300 font-black ml-1 text-2xl">,00</span>
               </div>
-              <ul className="space-y-5 mb-12 flex-grow">
+              <ul className="space-y-6 mb-12 flex-grow">
                 {["Top 10 Receitas", "Guia de Substituições", "Suporte via E-mail"].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-slate-600 font-semibold">
-                    <CheckCircle size={18} className="text-emerald-500" /> {item}
+                  <li key={i} className="flex items-center gap-4 text-slate-600 font-bold">
+                    <div className="w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500">
+                      <CheckCircle size={14} />
+                    </div>
+                    {item}
                   </li>
                 ))}
               </ul>
-              <button onClick={onStart} className="w-full py-5 rounded-full border-2 border-slate-200 text-slate-900 font-extrabold hover:border-emerald-500 hover:text-emerald-500 transition-all">
+              <a
+                href="https://pay.cakto.com.br/sqpgdf5_711359"
+                rel="noopener noreferrer"
+                className="w-full py-6 rounded-3xl border-2 border-slate-100 text-slate-900 font-black hover:bg-slate-50 hover:border-slate-200 transition-all text-center block text-lg shadow-sm"
+              >
                 Selecionar Essencial
-              </button>
+              </a>
             </div>
 
-            {/* Plan 2 */}
-            <div className="relative bg-white p-10 rounded-[32px] shadow-[0_40px_80px_-20px_rgba(16,185,129,0.2)] scale-105 z-10 flex flex-col border-2 border-emerald-500">
-              <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-6 py-2 rounded-full text-[10px] font-extrabold uppercase tracking-[0.2em] shadow-lg">👑 MAIS ESCOLHIDO</div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">Acesso Premium</h3>
-              <p className="text-slate-500 mb-8 font-medium">O método completo e atualizado.</p>
-              <div className="mb-8 text-emerald-600">
-                <span className="text-5xl font-extrabold">R$ 29</span>
-                <span className="font-extrabold ml-1">,90</span>
+            {/* Plan 2 - DARK MODE PREMIUM */}
+            <div className="relative bg-[#0f172a] p-12 rounded-[48px] shadow-[0_48px_80px_-20px_rgba(16,185,129,0.3)] scale-105 z-10 flex flex-col border border-emerald-500/30">
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-8 py-2.5 rounded-full text-[11px] font-black uppercase tracking-[0.25em] shadow-xl shadow-emerald-500/20 whitespace-nowrap">👑 MAIS COMPRADO</div>
+
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h3 className="text-3xl font-black text-white mb-1">Acesso Premium</h3>
+                  <p className="text-emerald-400/80 mb-10 font-bold text-sm">O método completo e atualizado.</p>
+                </div>
+                <Sparkles className="text-emerald-400 animate-pulse" size={28} />
               </div>
-              <ul className="space-y-5 mb-12 flex-grow">
+
+              <div className="mb-10">
+                <span className="text-6xl font-black text-white">R$ 29</span>
+                <span className="text-emerald-400 font-black ml-1 text-2xl">,90</span>
+              </div>
+
+              <ul className="space-y-6 mb-12 flex-grow">
                 {[
                   "Todas as Receitas + Novas todo mês",
                   "Módulo de Vídeo Aulas Premium",
@@ -447,17 +464,21 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
                   "Suporte Prioritário VIP",
                   "Bônus: Lista de Compras Inteligente"
                 ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-slate-900 font-bold">
-                    <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center text-white">
+                  <li key={i} className="flex items-center gap-4 text-slate-200 font-bold">
+                    <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
                       <CheckCircle size={12} />
                     </div>
                     {item}
                   </li>
                 ))}
               </ul>
-              <button onClick={onStart} className="hover-scale w-full py-5 rounded-full bg-emerald-500 text-white font-extrabold premium-shadow hover:bg-emerald-600 transition-all">
+              <a
+                href="https://pay.cakto.com.br/yo5n39h_711365"
+                rel="noopener noreferrer"
+                className="hover-scale w-full py-6 rounded-3xl bg-emerald-500 text-white font-black premium-shadow hover:bg-emerald-600 transition-all text-center block text-xl shadow-[0_20px_40px_-10px_rgba(16,185,129,0.4)]"
+              >
                 Garantir Acesso Premium
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -524,13 +545,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
             Junte-se a milhares de pessoas que já descobriram como emagrecer sem abrir mão do prazer de comer. Sua melhor versão está a um clique de distância.
           </p>
 
-          <button
-            onClick={onStart}
-            className="group hover-scale inline-flex items-center gap-3 bg-orange-600 text-white px-10 py-5 rounded-xl text-xl font-bold hover:bg-orange-700 transition-all shadow-xl shadow-orange-200"
+          <a
+            href="https://pay.cakto.com.br/yo5n39h_711365"
+            rel="noopener noreferrer"
+            className="group hover-scale inline-flex items-center gap-3 bg-orange-600 text-white px-10 py-5 rounded-xl text-xl font-bold hover:bg-orange-700 transition-all shadow-xl shadow-orange-200 text-center"
           >
             Quero começar agora
             <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
-          </button>
+          </a>
         </div>
       </section>
 
