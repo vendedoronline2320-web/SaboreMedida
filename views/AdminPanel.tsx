@@ -321,29 +321,52 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
               {chatSessions.length === 0 && (
                 <div className="text-center text-gray-400 dark:text-gray-500 py-10 font-bold text-sm">Nenhuma conversa iniciada.</div>
               )}
-              {chatSessions.map(session => (
-                <div
-                  key={session.userId}
-                  onClick={() => setSelectedChatUser(session.userId)}
-                  className={`p-4 rounded-2xl cursor-pointer transition-all border border-transparent ${selectedChatUser === session.userId ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/30' : 'hover:bg-gray-50 dark:hover:bg-slate-700'}`}
-                >
-                  <div className="flex items-center gap-4 relative">
-                    <img src={session.userAvatar} className="w-12 h-12 rounded-full border border-gray-100 dark:border-slate-600" alt="Avatar" />
-                    <div className="min-w-0">
-                      <h5 className="font-bold text-gray-900 dark:text-white truncate">{session.userName}</h5>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px]">{session.lastMessage.text}</p>
-                    </div>
-                    <div className="ml-auto flex flex-col items-end gap-2 text-[10px] font-bold text-gray-300 dark:text-gray-600">
-                      {new Date(session.lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      {(session.unreadCount || 0) > 0 && (
-                        <span className="w-5 h-5 bg-emerald-500 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-pulse">
-                          {session.unreadCount}
-                        </span>
-                      )}
+              {chatSessions.map(session => {
+                // Determinar se é suporte prioritário (usuários premium ou admin)
+                const isPrioritySupport = session.supportType === 'priority';
+
+                return (
+                  <div
+                    key={session.userId}
+                    onClick={() => setSelectedChatUser(session.userId)}
+                    className={`p-4 rounded-2xl cursor-pointer transition-all border ${selectedChatUser === session.userId
+                      ? isPrioritySupport
+                        ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-900/40'
+                        : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/30'
+                      : 'border-transparent hover:bg-gray-50 dark:hover:bg-slate-700'
+                      }`}
+                  >
+                    <div className="flex items-center gap-4 relative">
+                      <div className="relative">
+                        <img src={session.userAvatar} className="w-12 h-12 rounded-full border border-gray-100 dark:border-slate-600" alt="Avatar" />
+                        {/* Indicador de tipo de suporte */}
+                        <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 ${isPrioritySupport ? 'bg-indigo-500' : 'bg-gray-400'
+                          }`}></div>
+                      </div>
+                      <div className="min-w-0 flex-grow">
+                        <div className="flex items-center gap-2">
+                          <h5 className="font-bold text-gray-900 dark:text-white truncate">{session.userName}</h5>
+                          {isPrioritySupport && (
+                            <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                              Prioritário
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px]">{session.lastMessage.text}</p>
+                      </div>
+                      <div className="ml-auto flex flex-col items-end gap-2 text-[10px] font-bold text-gray-300 dark:text-gray-600">
+                        {new Date(session.lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {(session.unreadCount || 0) > 0 && (
+                          <span className={`w-5 h-5 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-pulse ${isPrioritySupport ? 'bg-indigo-500' : 'bg-emerald-500'
+                            }`}>
+                            {session.unreadCount}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -357,7 +380,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
             ) : (
               <>
                 <div className="p-6 border-b border-gray-50 dark:border-slate-700 flex justify-between items-center bg-gray-50/50 dark:bg-slate-700/30">
-                  <h4 className="font-black text-gray-900 dark:text-white">Chat com {chatSessions.find(s => s.userId === selectedChatUser)?.userName}</h4>
+                  <div className="flex items-center gap-3">
+                    <h4 className="font-black text-gray-900 dark:text-white">
+                      Chat com {chatSessions.find(s => s.userId === selectedChatUser)?.userName}
+                    </h4>
+                    {chatSessions.find(s => s.userId === selectedChatUser)?.supportType === 'priority' && (
+                      <span className="text-[10px] font-black px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                        Suporte Prioritário
+                      </span>
+                    )}
+                  </div>
                   <button onClick={() => setSelectedChatUser(null)} className="lg:hidden p-2 text-gray-400"><X size={20} /></button>
                 </div>
 

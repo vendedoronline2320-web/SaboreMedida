@@ -88,4 +88,5 @@ export interface ChatSession {
   userAvatar: string;
   lastMessage: ChatMessage;
   unreadCount?: number;
+  supportType?: 'common' | 'priority';
 }

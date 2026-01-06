@@ -92,9 +92,22 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   const unreadCount = user.notifications.filter(n => !n.read).length;
 
   const handleReadNotification = async (notification: Notification) => {
-    // If not clickable for their plan
-    if (user.profile.plan === 'essential' && notification.link && (notification.link.includes('recipes') || notification.link.includes('videos?id='))) {
-      // Find the video and check if it is premium
+    // 1. Mark as read immediately
+    if (!notification.read) {
+      const newNotifications = await db.markNotificationAsRead(notification.id);
+      if (newNotifications) {
+        setUser({ ...user, notifications: newNotifications });
+      }
+    }
+
+    // 2. Hide modal
+    setShowNotifications(false);
+
+    // 3. Handle navigation/actions based on notification type and link
+    if (!notification.link) return;
+
+    // Check for plan restrictions
+    if (user.profile.plan === 'essential' && (notification.link.includes('recipes') || notification.link.includes('videos?id='))) {
       if (notification.link.includes('videos?id=')) {
         const id = notification.link.split('=')[1];
         const v = videos.find(vid => vid.id === id);
@@ -108,29 +121,30 @@ const DashboardView: React.FC<DashboardViewProps> = ({
       }
     }
 
-    if (notification.link) {
-      if (notification.link === '/chat') {
-        setShowFloatingChat(true);
-      } else if (notification.link === '/admin/support') {
-        setActiveSection('admin');
-      } else if (notification.link.includes('videos?id=')) {
-        const id = notification.link.split('=')[1];
-        const v = videos.find(vid => vid.id === id);
-        if (v) handleOpenVideo(v);
-      } else if (notification.link.includes('recipes?id=')) {
-        const id = notification.link.split('=')[1];
-        const r = recipes.find(rec => rec.id === id);
-        if (r) handleOpenRecipe(r);
-      }
+    // Navigate based on link type
+    if (notification.link === '/chat') {
+      // Notification de mensagem -> abrir chat
+      setShowFloatingChat(true);
+    } else if (notification.link === '/admin/support') {
+      // Notification para admin
+      setActiveSection('admin');
+    } else if (notification.link.includes('videos?id=')) {
+      // Notification de vídeo -> abrir vídeo específico
+      const id = notification.link.split('=')[1];
+      const v = videos.find(vid => vid.id === id);
+      if (v) handleOpenVideo(v);
+    } else if (notification.link.includes('recipes?id=')) {
+      // Notification de receita -> abrir receita específica
+      const id = notification.link.split('=')[1];
+      const r = recipes.find(rec => rec.id === id);
+      if (r) handleOpenRecipe(r);
     }
+  };
 
-    if (!notification.read) {
-      const newNotifications = await db.markNotificationAsRead(notification.id);
-      if (newNotifications) {
-        setUser({ ...user, notifications: newNotifications });
-      }
-    }
-    setShowNotifications(false);
+  const handleOpenNotifications = () => {
+    // Apenas abre o painel de notificações
+    // As notificações serão marcadas como lidas quando o usuário clicar nelas individualmente
+    setShowNotifications(true);
   };
 
   const toggleDarkMode = async () => {
@@ -447,7 +461,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             <button
-              onClick={() => setShowNotifications(true)}
+              onClick={handleOpenNotifications}
               className="relative text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl"
             >
               <Bell size={24} className="dark:text-slate-400" />

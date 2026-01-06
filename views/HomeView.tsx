@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { User, VideoLesson, Recipe, Notification } from '../types';
-import { Play, Utensils, Clock, TrendingUp, History, Sparkles, Flame, Trophy, Bell, ChevronRight, Heart, Lock, LogOut, RefreshCcw, Crown } from 'lucide-react';
+import { Play, Utensils, Clock, TrendingUp, History, Sparkles, Flame, Trophy, Bell, ChevronRight, Heart, Lock, RefreshCcw, Crown } from 'lucide-react';
 import { db } from '../services/database';
 
 interface HomeViewProps {
@@ -74,15 +74,6 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
-  const handleClearHistory = async () => {
-    if (confirm('Deseja realmente limpar seu histórico de atividades?')) {
-      setIsRefreshing(true);
-      await db.clearUserActivity();
-      const updatedUser = await db.getCurrentUser();
-      if (updatedUser) setUser(updatedUser);
-      setIsRefreshing(false);
-    }
-  };
 
   const handleRecClick = (item: any) => {
     if (!isPremium && (item.type === 'recipe' || item.isPremium)) {
@@ -231,22 +222,14 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
               <h3 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-3 uppercase tracking-widest">
                 <History size={18} className="text-emerald-500" /> Histórico
               </h3>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleRefreshActivities}
-                  disabled={isRefreshing}
-                  className={`p-2 text-gray-400 hover:text-emerald-500 transition-all ${isRefreshing ? 'animate-spin text-emerald-500' : ''}`}
-                  title="Atualizar histórico"
-                >
-                  <RefreshCcw size={16} />
-                </button>
-                <button
-                  onClick={handleClearHistory}
-                  className="text-[10px] font-black text-red-400 hover:text-red-600 uppercase tracking-widest"
-                >
-                  Limpar
-                </button>
-              </div>
+              <button
+                onClick={handleRefreshActivities}
+                disabled={isRefreshing}
+                className={`p-2 text-gray-400 hover:text-emerald-500 transition-all ${isRefreshing ? 'animate-spin text-emerald-500' : ''}`}
+                title="Atualizar histórico"
+              >
+                <RefreshCcw size={16} />
+              </button>
             </div>
             <div className="flex-grow overflow-y-auto p-4 md:p-6 space-y-4">
               {user.history.length === 0 ? (

@@ -386,16 +386,31 @@ class DatabaseService {
   }
 
   async getAllChatSessions(): Promise<ChatSession[]> {
-    const { data: messages } = await supabase.from('chat_messages').select('*, profiles(name, avatar_url)').order('created_at', { ascending: false });
+    const { data: messages } = await supabase.from('chat_messages').select('*, profiles(name, avatar_url, plan)').order('created_at', { ascending: false });
     const sessions: Record<string, ChatSession> = {};
     (messages || []).forEach(m => {
       if (!sessions[m.user_id]) {
+        // Determinar tipo de suporte baseado no plano do usuário
+        const userPlan = (m.profiles as any)?.plan || 'free_trial';
+        const isPriority = userPlan === 'premium';
+
         sessions[m.user_id] = {
-          userId: m.user_id, userName: (m.profiles as any)?.name || 'Usuário', userAvatar: (m.profiles as any)?.avatar_url || '',
-          lastMessage: { id: m.id, senderId: m.sender_id, text: m.text, timestamp: new Date(m.created_at).getTime(), isAdmin: m.is_admin, isRead: m.is_read },
-          unreadCount: 0
+          userId: m.user_id,
+          userName: (m.profiles as any)?.name || 'Usuário',
+          userAvatar: (m.profiles as any)?.avatar_url || '',
+          lastMessage: {
+            id: m.id,
+            senderId: m.sender_id,
+            text: m.text,
+            timestamp: new Date(m.created_at).getTime(),
+            isAdmin: m.is_admin,
+            isRead: m.is_read
+          },
+          unreadCount: 0,
+          supportType: isPriority ? 'priority' : 'common'
         };
       }
+
       if (!m.is_admin && !m.is_read) sessions[m.user_id].unreadCount!++;
     });
     return Object.values(sessions);
@@ -403,6 +418,14 @@ class DatabaseService {
 
   async markNotificationAsRead(id: string) {
     await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+    return (await this.getCurrentUser())?.notifications || [];
+  }
+
+  async markAllNotificationsAsRead() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return [];
+
+    await supabase.from('notifications').update({ is_read: true }).eq('user_id', session.user.id).eq('is_read', false);
     return (await this.getCurrentUser())?.notifications || [];
   }
 
