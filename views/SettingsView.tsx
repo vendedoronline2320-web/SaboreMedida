@@ -167,9 +167,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onLogout }) => {
               </div>
               <div
                 onClick={toggleDarkMode}
-                className={`w-12 h-6 md:w-14 md:h-7 rounded-full relative transition-all cursor-pointer ${isDark ? 'bg-emerald-500 shadow-lg shadow-emerald-200 dark:shadow-emerald-900/20' : 'bg-gray-200 dark:bg-slate-600'}`}
+                className={`w-14 h-8 rounded-full relative transition-all cursor-pointer flex items-center p-1 ${isDark ? 'bg-slate-700' : 'bg-[#e2e8f0]'}`}
               >
-                <div className={`absolute top-1 w-4 h-4 md:w-5 md:h-5 bg-white rounded-full transition-all ${isDark ? 'right-1' : 'left-1'}`}></div>
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 shadow-md ${isDark ? 'translate-x-[24px] bg-slate-100 text-slate-900' : 'translate-x-0 bg-[#001c3d] text-white'}`}
+                >
+                  {isDark ? <Moon size={12} /> : <Sun size={12} />}
+                </div>
               </div>
             </div>
 
@@ -188,8 +192,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onLogout }) => {
             </div>
             <div className="relative z-10">
               <p className="text-[10px] font-black text-emerald-500 dark:text-emerald-400 uppercase tracking-[0.3em] mb-2">Seu Plano Atual</p>
-              <h4 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-2">Acesso Premium VIP</h4>
-              <p className="text-gray-400 dark:text-gray-400 font-bold text-sm mb-8">Status: Vitalício (Ativado em 2026)</p>
+              <h4 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-2">
+                {user.profile.plan === 'premium' ? 'Acesso Premium VIP' : user.profile.plan === 'essential' ? 'Plano Essencial' : 'Degustação (Free Trial)'}
+              </h4>
+              <p className="text-gray-400 dark:text-gray-400 font-bold text-sm mb-8">
+                Status: {user.profile.plan === 'premium' ? 'Vitalício • Ativado em 2026' : user.profile.plan === 'essential' ? 'Mensal Ativo' : `Expira em: ${user.profile.trialExpiresAt ? new Date(user.profile.trialExpiresAt).toLocaleString() : '24h'}`}
+              </p>
 
               <button
                 onClick={handleRefund}

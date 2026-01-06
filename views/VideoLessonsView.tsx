@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { VideoLesson } from '../types';
-import { Play, Clock, ArrowLeft, Heart, FileText, Share2, Loader2, Tag, ChevronRight } from 'lucide-react';
+import { Play, Clock, ArrowLeft, Heart, FileText, Share2, Loader2, Tag, ChevronRight, Lock } from 'lucide-react';
 import { db } from '../services/database';
 import { storage } from '../services/storage';
 
 interface VideoLessonsViewProps {
+  user: any;
   videos: VideoLesson[];
   favorites: string[];
   onToggleFavorite: (id: string) => void;
@@ -13,7 +14,7 @@ interface VideoLessonsViewProps {
   onSelectionHandled?: () => void;
 }
 
-const VideoLessonsView: React.FC<VideoLessonsViewProps> = ({ videos, favorites, onToggleFavorite, externalSelection, onSelectionHandled }) => {
+const VideoLessonsView: React.FC<VideoLessonsViewProps> = ({ user, videos, favorites, onToggleFavorite, externalSelection, onSelectionHandled }) => {
   const [selectedVideo, setSelectedVideo] = useState<VideoLesson | null>(null);
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
   const [loadingVideo, setLoadingVideo] = useState(false);
@@ -29,7 +30,21 @@ const VideoLessonsView: React.FC<VideoLessonsViewProps> = ({ videos, favorites, 
   }, [externalSelection, videos]);
 
   const handleSelect = async (video: VideoLesson) => {
+    // Plan Access Check
+    const access = await db.checkPlanAccess('limited_videos', user);
+    if (!access.hasAccess) {
+      if (access.reason === 'limit_reached') {
+        alert('Você atingiu seu limite de 5 vídeos mensais para o plano Essencial. Faça o upgrade para o Premium para acesso ilimitado!');
+        window.location.href = 'https://pay.cakto.com.br/yo5n39h_711365';
+      } else {
+        alert('Esta aula é exclusiva para assinantes Premium.');
+      }
+      return;
+    }
+
     db.addToHistory('video', video.id, video.title);
+    db.recordVideoView(user.id, video.id);
+
     setSelectedVideo(video);
     setLoadingVideo(true);
 
@@ -146,8 +161,8 @@ const VideoLessonsView: React.FC<VideoLessonsViewProps> = ({ videos, favorites, 
                 <button
                   onClick={() => onToggleFavorite(selectedVideo.id)}
                   className={`flex-grow md:flex-none flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-black transition-all ${favorites.includes(selectedVideo.id)
-                      ? 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 border border-red-100 dark:border-transparent shadow-xl shadow-red-100/50 dark:shadow-none'
-                      : 'bg-gray-50 dark:bg-slate-700 text-gray-400 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 border border-transparent'
+                    ? 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 border border-red-100 dark:border-transparent shadow-xl shadow-red-100/50 dark:shadow-none'
+                    : 'bg-gray-50 dark:bg-slate-700 text-gray-400 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 border border-transparent'
                     }`}
                 >
                   <Heart size={20} className={favorites.includes(selectedVideo.id) ? "fill-current" : ""} />

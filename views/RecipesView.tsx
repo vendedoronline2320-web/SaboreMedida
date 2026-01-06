@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Recipe } from '../types';
-import { Clock, ChefHat, ArrowLeft, Heart, Plus, X, Save, Trash, Image as ImageIcon } from 'lucide-react';
+import { Clock, ChefHat, ArrowLeft, Heart, Plus, X, Save, Trash, Image as ImageIcon, Lock } from 'lucide-react';
 import { db } from '../services/database';
 
 interface RecipesViewProps {
+  user: any;
   recipes: Recipe[];
   favorites: string[];
   onToggleFavorite: (id: string) => void;
@@ -14,7 +15,7 @@ interface RecipesViewProps {
   onUpdateRecipes?: (recipes: Recipe[]) => void;
 }
 
-const RecipesView: React.FC<RecipesViewProps> = ({ recipes, favorites, onToggleFavorite, externalSelection, onSelectionHandled, isAdmin, onUpdateRecipes }) => {
+const RecipesView: React.FC<RecipesViewProps> = ({ user, recipes, favorites, onToggleFavorite, externalSelection, onSelectionHandled, isAdmin, onUpdateRecipes }) => {
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newRecipe, setNewRecipe] = useState<Partial<Recipe>>({
@@ -134,13 +135,24 @@ const RecipesView: React.FC<RecipesViewProps> = ({ recipes, favorites, onToggleF
                 <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white">{selectedRecipe.name}</h1>
               </div>
               <button
-                onClick={() => onToggleFavorite(selectedRecipe.id)}
-                className={`p-3 rounded-2xl transition-all ${favorites.includes(selectedRecipe.id)
+                onClick={() => {
+                  if (user.profile.plan === 'essential') {
+                    alert('Favoritos é uma funcionalidade Premium. Faça o upgrade agora!');
+                    return;
+                  }
+                  onToggleFavorite(selectedRecipe.id);
+                }}
+                className={`p-3 rounded-2xl transition-all relative ${favorites.includes(selectedRecipe.id)
                   ? 'bg-red-50 dark:bg-red-900/20 text-red-500'
                   : 'bg-gray-50 dark:bg-slate-700 text-gray-400 hover:text-red-500'
                   }`}
               >
                 <Heart size={24} className={favorites.includes(selectedRecipe.id) ? "fill-current" : ""} />
+                {user.profile.plan === 'essential' && (
+                  <div className="absolute -top-1 -right-1 bg-white dark:bg-slate-800 rounded-full p-0.5 shadow-sm">
+                    <Lock size={12} className="text-gray-400" />
+                  </div>
+                )}
               </button>
             </div>
 
@@ -230,12 +242,21 @@ const RecipesView: React.FC<RecipesViewProps> = ({ recipes, favorites, onToggleF
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (user.profile.plan === 'essential') {
+                      alert('Favoritos é uma funcionalidade Premium. Faça o upgrade agora!');
+                      return;
+                    }
                     onToggleFavorite(recipe.id);
                   }}
-                  className={`p-2 rounded-xl transition-all ${favorites.includes(recipe.id) ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'
+                  className={`p-2 rounded-xl transition-all relative ${favorites.includes(recipe.id) ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'
                     }`}
                 >
                   <Heart size={20} className={favorites.includes(recipe.id) ? "fill-current" : ""} />
+                  {user.profile.plan === 'essential' && (
+                    <div className="absolute -top-1 -right-1 bg-white dark:bg-slate-800 rounded-full p-0.5 shadow-sm">
+                      <Lock size={10} className="text-gray-400" />
+                    </div>
+                  )}
                 </button>
               </div>
               <p className="text-gray-500 dark:text-gray-400 text-sm line-clamp-2 mb-4 leading-relaxed">{recipe.description}</p>

@@ -44,7 +44,7 @@ export type DashboardSection = 'home' | 'recipes' | 'videos' | 'favorites' | 'pr
 export interface UserProfile {
   name: string;
   email: string;
-  plan: 'basic' | 'complete';
+  plan: 'free_trial' | 'essential' | 'premium';
   avatar?: string;
   goal?: string;
   weight?: string;
@@ -56,6 +56,7 @@ export interface UserProfile {
   notificationsEnabled?: boolean;
   streak?: number;
   lastStreakUpdate?: number;
+  trialExpiresAt?: number;
 }
 
 export interface User {

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ChevronRight, CheckCircle, Play, Star, ShieldCheck, ArrowRight, Sparkles, Menu, X, Trophy } from 'lucide-react';
+import { ChevronRight, CheckCircle, Play, Star, ShieldCheck, ArrowRight, Sparkles, Menu, X, Trophy, CheckCheck } from 'lucide-react';
 import { TESTIMONIALS, FAQS } from '../constants';
 
 interface LandingPageProps {
@@ -164,7 +164,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
       </section>
 
       {/* Benefits Section (Image 4 - Por que funciona) */}
-      <section id="benefícios" className="py-20 bg-white">
+      <section id="benefícios" className="py-20 bg-[#f5f5f5]">
         <div className="max-w-3xl mx-auto px-6 text-center animate-appear">
           <span className="text-emerald-500 font-bold tracking-widest text-sm uppercase mb-4 block">POR QUE FUNCIONA</span>
           <h2 className="text-4xl md:text-5xl font-extrabold text-[#0f172a] mb-16">
@@ -260,10 +260,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
       </section>
 
       {/* Comer Pão Section (Image 1) */}
-      <section className="bg-white py-16">
+      <section className="bg-black py-16">
         <div className="max-w-2xl mx-auto px-6">
-          <div className="bg-gradient-to-r from-emerald-50 to-orange-50 rounded-3xl p-8 md:p-12 text-center border border-slate-100 shadow-sm animate-appear">
-            <h3 className="text-2xl md:text-3xl font-bold text-slate-800 leading-relaxed">
+          <div className="rounded-3xl p-8 md:p-12 text-center animate-appear">
+            <h3 className="text-2xl md:text-3xl font-bold text-white leading-relaxed">
               Comer pão? <span className="text-emerald-500 font-extrabold">SIM!</span>
               <br />
               Comer pão do jeito certo?
@@ -285,17 +285,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
 
           <div className="grid md:grid-cols-2 gap-8">
             {/* Testimonial 1 */}
-            <div className="bg-white p-6 md:p-8 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50">
-              <div className="flex items-center gap-4 mb-6 border-b border-slate-100 pb-4">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-lg">MS</div>
-                <div>
-                  <span className="font-bold text-slate-900 text-lg block">Maria S.</span>
-                  <span className="text-xs text-emerald-500 font-medium">Online agora</span>
-                </div>
-              </div>
-
+            <div className="bg-[#efeae2] p-6 md:p-8 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50">
               <div className="space-y-3 font-sans text-[15px]">
                 <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm border border-slate-100 max-w-[85%] self-start relative">
+                  <p className="text-slate-800 font-bold mb-1">Maria S.</p>
                   <p className="text-slate-800">Gente, preciso contar uma coisa...</p>
                   <span className="text-[10px] text-slate-400 absolute bottom-1 right-2">09:30</span>
                 </div>
@@ -307,59 +300,45 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
                   <p className="text-slate-900">E o melhor: continuo comendo pão todo dia kkk</p>
                   <div className="text-right mt-1 flex justify-end items-center gap-1">
                     <span className="text-[10px] text-slate-500">09:32</span>
-                    <CheckCircle size={12} className="text-blue-500" />
+                    <CheckCheck size={16} className="text-[#53bdeb]" />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Testimonial 2 */}
-            <div className="bg-white p-6 md:p-8 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50">
-              <div className="flex items-center gap-4 mb-6 border-b border-slate-100 pb-4">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-lg">AP</div>
-                <div>
-                  <span className="font-bold text-slate-900 text-lg block">Ana Paula</span>
-                  <span className="text-xs text-slate-400 font-medium">Visto por último hoje às 14:10</span>
-                </div>
-              </div>
-
+            <div className="bg-[#efeae2] p-6 md:p-8 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50">
               <div className="space-y-3 font-sans text-[15px]">
                 <div className="bg-[#d9fdd3] p-3 rounded-xl rounded-tr-none shadow-sm max-w-[85%] ml-auto relative">
+                  <p className="text-slate-900 font-bold mb-1">Ana Paula</p>
                   <p className="text-slate-900">Amiga, aquela receita do bolo fit é surreal 😱</p>
                   <div className="text-right mt-1 flex justify-end items-center gap-1">
                     <span className="text-[10px] text-slate-500">14:12</span>
-                    <CheckCircle size={12} className="text-blue-500" />
+                    <CheckCheck size={16} className="text-[#53bdeb]" />
                   </div>
                 </div>
                 <div className="bg-[#d9fdd3] p-3 rounded-xl rounded-tr-none shadow-sm max-w-[85%] ml-auto relative">
                   <p className="text-slate-900">Meu marido nem percebeu que era saudável 😉</p>
                   <div className="text-right mt-1 flex justify-end items-center gap-1">
                     <span className="text-[10px] text-slate-500">14:13</span>
-                    <CheckCircle size={12} className="text-blue-500" />
+                    <CheckCheck size={16} className="text-[#53bdeb]" />
                   </div>
                 </div>
                 <div className="bg-[#d9fdd3] p-3 rounded-xl rounded-tr-none shadow-sm max-w-[85%] ml-auto relative">
                   <p className="text-slate-900">Já emagreci 3kg e ele 2kg kkkkk</p>
                   <div className="text-right mt-1 flex justify-end items-center gap-1">
                     <span className="text-[10px] text-slate-500">14:15</span>
-                    <CheckCircle size={12} className="text-blue-500" />
+                    <CheckCheck size={16} className="text-[#53bdeb]" />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Testimonial 3 */}
-            <div className="bg-white p-6 md:p-8 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50">
-              <div className="flex items-center gap-4 mb-6 border-b border-slate-100 pb-4">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-lg">CM</div>
-                <div>
-                  <span className="font-bold text-slate-900 text-lg block">Carla M.</span>
-                  <span className="text-xs text-emerald-500 font-medium">Digitando...</span>
-                </div>
-              </div>
-
+            <div className="bg-[#efeae2] p-6 md:p-8 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50">
               <div className="space-y-3 font-sans text-[15px]">
                 <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm border border-slate-100 max-w-[85%] self-start relative">
+                  <p className="text-slate-800 font-bold mb-1">Carla M.</p>
                   <p className="text-slate-800">Finalmente algo que funciona pra mim! Já tinha desistido de dieta...</p>
                   <span className="text-[10px] text-slate-400 absolute bottom-1 right-2">18:45</span>
                 </div>
@@ -367,23 +346,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
                   <p className="text-slate-900">Em 6 semanas: -5kg e me sentindo ótima! 💚</p>
                   <div className="text-right mt-1 flex justify-end items-center gap-1">
                     <span className="text-[10px] text-slate-500">18:47</span>
-                    <CheckCircle size={12} className="text-blue-500" />
+                    <CheckCheck size={16} className="text-[#53bdeb]" />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Testimonial 4 */}
-            <div className="bg-white p-6 md:p-8 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50">
-              <div className="flex items-center gap-4 mb-6 border-b border-slate-100 pb-4">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-lg">PB</div>
-                <div>
-                  <span className="font-bold text-slate-900 text-lg block">Patricia B.</span>
-                  <span className="text-xs text-slate-400 font-medium">Online há 5 min</span>
-                </div>
-              </div>
+            <div className="bg-[#efeae2] p-6 md:p-8 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50">
               <div className="space-y-3 font-sans text-[15px]">
                 <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm border border-slate-100 max-w-[85%] self-start relative">
+                  <p className="text-slate-800 font-bold mb-1">Patricia B.</p>
                   <p className="text-slate-800">Nunca achei que fosse possível emagrecer comendo coisas gostosas 😋</p>
                   <span className="text-[10px] text-slate-400 absolute bottom-1 right-2">16:50</span>
                 </div>
@@ -391,7 +364,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
                   <p className="text-slate-900">-8kg em 3 meses! Recomendo muito! ✨</p>
                   <div className="text-right mt-1 flex justify-end items-center gap-1">
                     <span className="text-[10px] text-slate-500">16:55</span>
-                    <CheckCircle size={12} className="text-blue-500" />
+                    <CheckCheck size={16} className="text-[#53bdeb]" />
                   </div>
                 </div>
               </div>
@@ -415,7 +388,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
 
           <div className="grid md:grid-cols-2 gap-8 lg:gap-12 max-w-5xl mx-auto items-center">
             {/* Plan 1 */}
-            <div className="bg-white/80 backdrop-blur-sm p-12 rounded-[56px] border border-white transition-all flex flex-col group relative shadow-xl hover:shadow-2xl hover:-translate-y-2">
+            <div className="bg-white/80 backdrop-blur-sm p-12 rounded-[56px] border-2 border-black transition-all flex flex-col group relative shadow-xl hover:shadow-2xl hover:-translate-y-2">
               <div className="mb-10">
                 <h3 className="text-2xl font-black text-slate-900 mb-2">Plano Essencial</h3>
                 <p className="text-slate-400 font-bold text-sm">As 10 receitas fundamentais.</p>
@@ -488,7 +461,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
         </div>
       </section>
       {/* FAQ Simplified */}
-      <section id="faq" className="py-24 bg-white border-t border-slate-50">
+      <section id="faq" className="py-24 bg-[#f5f5f5] border-t border-slate-200">
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Perguntas e Respostas</h2>
@@ -513,7 +486,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
       </section >
 
       {/* Guarantee Section */}
-      <section className="py-24 bg-white">
+      <section className="py-24 bg-[#f5f5f5]">
         <div className="max-w-4xl mx-auto px-6">
           <div className="bg-emerald-50 rounded-[40px] p-12 text-center border border-emerald-100">
             <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm text-emerald-500">

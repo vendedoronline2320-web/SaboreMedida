@@ -162,31 +162,31 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
           <div className="bg-[#0f172a] p-10 rounded-[48px] text-white relative overflow-hidden group shadow-2xl shadow-indigo-900/20">
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
             <h3 className="text-xl font-black mb-4">
-              {user.profile.plan === 'complete' ? 'Acesso Premium VIP' : 'Upgrade para Premium'}
+              {user.profile.plan === 'premium' ? 'Acesso Premium VIP' : user.profile.plan === 'essential' ? 'Plano Essencial' : 'Teste Grátis Ativo'}
             </h3>
             <p className="text-slate-400 text-sm font-medium mb-8 leading-relaxed">
-              {user.profile.plan === 'complete'
-                ? 'Você está no nível mais alto de nossa plataforma. Suporte 24h ativo.'
-                : 'Libere todas as receitas, vídeo aulas e suporte VIP agora mesmo.'}
+              {user.profile.plan === 'premium'
+                ? 'Você tem acesso total a todo o conteúdo e suporte VIP priorizado.'
+                : user.profile.plan === 'essential'
+                  ? 'Você tem acesso às receitas e 5 vídeo-aulas mensais. Para aulas ilimitadas, mude para o Premium.'
+                  : 'Seu período de 24h de degustação está ativo. Aproveite o conteúdo completo!'}
             </p>
             <div className="w-full h-2 bg-white/10 rounded-full mb-8 relative">
               <div
-                className={`h-full rounded-full shadow-[0_0_15px_rgba(16,185,129,0.5)] ${user.profile.plan === 'complete' ? 'w-[100%] bg-emerald-500' : 'w-[40%] bg-indigo-400'}`}
+                className={`h-full rounded-full shadow-[0_0_15px_rgba(16,185,129,0.5)] ${user.profile.plan === 'premium' ? 'w-[100%] bg-emerald-500' : user.profile.plan === 'essential' ? 'w-[60%] bg-indigo-400' : 'w-[40%] bg-orange-400'}`}
               ></div>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">
-                Status: {user.profile.plan === 'complete' ? 'Vitalício' : 'Básico'}
+                Status: {user.profile.plan === 'premium' ? 'Vitalício VM' : user.profile.plan === 'essential' ? 'Ativo' : 'Expira em 24h'}
               </span>
-              {user.profile.plan === 'complete' ? (
-                <Sparkles className="text-emerald-500 animate-pulse" size={20} />
-              ) : (
+              {user.profile.plan !== 'premium' && (
                 <a
                   href="https://pay.cakto.com.br/yo5n39h_711365"
                   rel="noopener noreferrer"
                   className="bg-emerald-500 text-white text-[10px] font-black px-4 py-2 rounded-xl hover:bg-emerald-600 transition-all"
                 >
-                  DESTRAVAR
+                  DESTRAVAR FULL
                 </a>
               )}
             </div>

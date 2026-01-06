@@ -43,6 +43,11 @@ class DatabaseService {
 
       if (!profile) throw new Error('[DB] Perfil não encontrado após tentativa de criação.');
 
+      // Check if trial is expired
+      const trialExpiresAt = profile.trial_expires_at ? new Date(profile.trial_expires_at).getTime() : null;
+      let plan = profile.plan || 'free_trial';
+      const isExpired = plan === 'free_trial' && trialExpiresAt && Date.now() > trialExpiresAt;
+
       // Fetch favorites
       const { data: favs } = await supabase
         .from('favorites')
@@ -54,7 +59,8 @@ class DatabaseService {
         profile: {
           name: profile.name || 'Usuário',
           email: profile.email,
-          plan: profile.plan || 'premium',
+          plan: plan,
+          trialExpiresAt: trialExpiresAt,
           isAdmin: profile.is_admin || profile.email === 'admin@saboremedida.com' || profile.email === 'vendedoronline2520@gmail.com',
           avatar: profile.avatar_url || '',
           goal: profile.goal || 'saude',
@@ -376,6 +382,62 @@ class DatabaseService {
       .eq('is_admin', false);
 
     return count || 0;
+  }
+
+  // --- Plan Logic ---
+
+  async checkPlanAccess(feature: string, user: User): Promise<{ hasAccess: boolean; reason?: 'expired' | 'limit_reached' | 'plan_required' }> {
+    const { profile } = user;
+
+    // Admins have access to everything
+    if (profile.isAdmin) return { hasAccess: true };
+
+    // 1. Check Free Trial Expiration
+    if (profile.plan === 'free_trial') {
+      const isExpired = profile.trialExpiresAt && Date.now() > profile.trialExpiresAt;
+      if (isExpired) return { hasAccess: false, reason: 'expired' };
+      return { hasAccess: true }; // Free trial has total access until expiration
+    }
+
+    // 2. Premium has access to everything
+    if (profile.plan === 'premium') return { hasAccess: true };
+
+    // 3. Essential logic
+    if (profile.plan === 'essential') {
+      const allowedFeatures = ['recipes', 'basic_support', 'limited_videos'];
+
+      if (feature === 'limited_videos') {
+        const count = await this.getVideoViewsCount(user.id);
+        if (count >= 5) return { hasAccess: false, reason: 'limit_reached' };
+        return { hasAccess: true };
+      }
+
+      if (allowedFeatures.includes(feature)) return { hasAccess: true };
+
+      return { hasAccess: false, reason: 'plan_required' };
+    }
+
+    return { hasAccess: false, reason: 'plan_required' };
+  }
+
+  async getVideoViewsCount(userId: string): Promise<number> {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const { count } = await supabase
+      .from('video_views')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gte('viewed_at', startOfMonth.toISOString());
+
+    return count || 0;
+  }
+
+  async recordVideoView(userId: string, videoId: string) {
+    await supabase
+      .from('video_views')
+      .insert([{ user_id: userId, video_id: videoId }]);
   }
 }
 

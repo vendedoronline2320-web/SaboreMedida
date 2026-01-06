@@ -51,7 +51,11 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser }) => {
         <div className="px-10 pb-10 -mt-12">
           <div className="flex flex-col md:flex-row items-end gap-6 mb-10">
             <div className="relative group">
-              <img src={user.profile.avatar} className="w-32 h-32 rounded-[32px] border-4 border-white dark:border-slate-800 shadow-xl object-cover transition-colors" />
+              {user.profile.avatar ? (
+                <img src={user.profile.avatar} className="w-32 h-32 rounded-[32px] border-4 border-white dark:border-slate-800 shadow-xl object-cover transition-colors" />
+              ) : (
+                <div className="w-32 h-32 rounded-[32px] border-4 border-white dark:border-slate-800 bg-[#dce1e8] dark:bg-slate-700 shadow-xl transition-colors" />
+              )}
               <button className="absolute inset-0 bg-black/40 rounded-[32px] flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all">
                 <Camera size={24} />
               </button>
