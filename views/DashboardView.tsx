@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { User, DashboardSection, VideoLesson, Recipe, Notification } from '../types';
-import { LayoutDashboard, Utensils, PlayCircle, Heart, User as UserIcon, Settings, LogOut, Search, Bell, ShieldAlert, X, Menu, Sun, Moon, Lock } from 'lucide-react';
+import { LayoutDashboard, Utensils, PlayCircle, Heart, User as UserIcon, Settings, LogOut, Search, Bell, ShieldAlert, X, Menu, Sun, Moon, Lock, MessageCircle } from 'lucide-react';
+import HelpChat from './HelpChat';
 import RecipesView from './RecipesView';
 import VideoLessonsView from './VideoLessonsView';
 import AdminPanel from './AdminPanel';
@@ -30,6 +31,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [targetContent, setTargetContent] = useState<{ type: 'video' | 'recipe', id: string } | null>(null);
   const [adminMessageCount, setAdminMessageCount] = useState(0);
+  const [showFloatingChat, setShowFloatingChat] = useState(false);
 
   // Poll for admin messages count
   React.useEffect(() => {
@@ -358,6 +360,25 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           )}
           {renderSection()}
+
+          {/* Floating Premium Support Bubble */}
+          {user.profile.plan === 'premium' && !user.profile.isAdmin && (
+            <>
+              <button
+                onClick={() => setShowFloatingChat(!showFloatingChat)}
+                className="fixed bottom-6 right-6 w-14 h-14 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-2xl hover:bg-emerald-600 hover:scale-110 active:scale-95 transition-all z-50 animate-bounce-slow"
+              >
+                {showFloatingChat ? <X size={24} /> : <MessageCircle size={24} />}
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                </span>
+              </button>
+
+              {showFloatingChat && (
+                <HelpChat user={user} onClose={() => setShowFloatingChat(false)} isFloating={true} />
+              )}
+            </>
+          )}
         </div>
       </main>
     </div>

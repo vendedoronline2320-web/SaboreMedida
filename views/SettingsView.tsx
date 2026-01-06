@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, ChatMessage } from '../types';
+import { User } from '../types';
 import { db } from '../services/database';
-import { Bell, Shield, Moon, Sun, LogOut, ChevronRight, HelpCircle, CreditCard, RotateCcw, Lock, MessageCircle, ArrowLeft, Send, X, User as UserIcon } from 'lucide-react';
+import { Bell, Shield, Moon, Sun, LogOut, ChevronRight, HelpCircle, CreditCard, RotateCcw, Lock, X, User as UserIcon, XCircle } from 'lucide-react';
+import HelpChat from './HelpChat';
 
 interface SettingsViewProps {
   user: User;
@@ -20,8 +21,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onLogout }) => {
 
   // Chat Modal
   const [showHelpChat, setShowHelpChat] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [newMessage, setNewMessage] = useState('');
 
   // Apply dark mode on mount if set
   useEffect(() => {
@@ -31,28 +30,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onLogout }) => {
       document.documentElement.classList.remove('dark');
     }
   }, [user.profile.darkMode]);
-
-  // Poll chat messages when open
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    const fetchChat = async () => {
-      const msgs = await db.getChatMessages(user.id);
-      setChatMessages(msgs);
-    };
-    if (showHelpChat) {
-      fetchChat();
-      interval = setInterval(fetchChat, 3000);
-    }
-    return () => clearInterval(interval);
-  }, [showHelpChat, user.id]);
-
-  const toggleDarkMode = async () => {
-    const newVal = !isDark;
-    setIsDark(newVal);
-    await db.updateProfile({ darkMode: newVal });
-    if (newVal) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-  };
 
   const toggleNotifications = async () => {
     const newVal = !notificationsEnabled;
@@ -90,24 +67,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onLogout }) => {
       setPassForm({ current: '', new: '', confirm: '' });
     } else {
       alert("Erro ao alterar senha.");
-    }
-  };
-
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
-    const text = newMessage;
-    setNewMessage('');
-    await db.sendMessage(user.id, text, false);
-    const updated = await db.getChatMessages(user.id);
-    setChatMessages(updated);
-
-    // Simulate support reply if chat is empty (first message)
-    if (updated.length === 1) {
-      setTimeout(async () => {
-        await db.sendMessage(user.id, "Olá! Bem-vindo ao suporte. Em que posso ajudar?", true);
-        const msgs = await db.getChatMessages(user.id);
-        setChatMessages(msgs);
-      }, 1500);
     }
   };
 
@@ -153,30 +112,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onLogout }) => {
               </div>
               <ChevronRight className="text-gray-300 dark:text-slate-500" />
             </div>
-
-            {/* Dark Mode */}
-            <div className="flex items-center justify-between p-6 md:p-8 rounded-[32px] bg-gray-50/30 dark:bg-slate-700/30 border border-transparent hover:border-gray-100 dark:hover:border-slate-600 hover:bg-white dark:hover:bg-slate-700 transition-all group">
-              <div className="flex items-center gap-4 md:gap-6">
-                <div className="w-12 h-12 md:w-14 md:h-14 bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center shadow-sm">
-                  {isDark ? <Moon size={24} /> : <Sun size={24} />}
-                </div>
-                <div>
-                  <h4 className="font-black text-gray-900 dark:text-white text-base md:text-lg">Modo Escuro</h4>
-                  <p className="text-sm text-gray-400 dark:text-gray-400 font-medium max-w-[200px] md:max-w-md leading-tight md:leading-normal">Altere a aparência do aplicativo.</p>
-                </div>
-              </div>
-              <div
-                onClick={toggleDarkMode}
-                className={`w-14 h-8 rounded-full relative transition-all cursor-pointer flex items-center p-1 ${isDark ? 'bg-slate-700' : 'bg-[#e2e8f0]'}`}
-              >
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 shadow-md ${isDark ? 'translate-x-[24px] bg-slate-100 text-slate-900' : 'translate-x-0 bg-[#001c3d] text-white'}`}
-                >
-                  {isDark ? <Moon size={12} /> : <Sun size={12} />}
-                </div>
-              </div>
-            </div>
-
           </div>
         </div>
 
@@ -202,24 +137,37 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onLogout }) => {
               <button
                 onClick={handleRefund}
                 disabled={requestingRefund}
-                className="flex items-center gap-3 text-sm font-black text-red-400 hover:text-red-600 transition-all px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 -ml-4"
+                className="flex items-center gap-3 text-sm font-black text-red-500 hover:text-red-700 transition-all px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 -ml-4"
               >
                 <RotateCcw size={18} /> {requestingRefund ? 'Processando Solicitação...' : 'Solicitar Reembolso (Garantia de 7 dias)'}
+              </button>
+
+              <button
+                onClick={() => {
+                  if (confirm('Tem certeza que deseja cancelar seu plano? Você perderá acesso a todos os benefícios exclusivos.')) {
+                    alert('Sua solicitação de cancelamento foi enviada. Nossa equipe entrará em contato em breve.');
+                  }
+                }}
+                className="flex items-center gap-3 text-sm font-black text-gray-400 hover:text-red-600 transition-all px-4 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-600 -ml-4 mt-2"
+              >
+                <XCircle size={18} /> Cancelar Assinatura
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-            <button
-              onClick={() => setShowHelpChat(true)}
-              className="flex items-center justify-between p-6 md:p-8 rounded-[32px] bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 hover:border-emerald-200 hover:shadow-xl transition-all text-left group"
-            >
-              <div className="flex items-center gap-5">
-                <HelpCircle className="text-gray-300 dark:text-slate-400 group-hover:text-emerald-500 transition-all" />
-                <span className="font-black text-gray-700 dark:text-white">Central de Ajuda</span>
-              </div>
-              <ChevronRight className="text-gray-200 dark:text-slate-500 group-hover:text-emerald-500" size={20} />
-            </button>
+            {user.profile.plan !== 'premium' && (
+              <button
+                onClick={() => setShowHelpChat(true)}
+                className="flex items-center justify-between p-6 md:p-8 rounded-[32px] bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 hover:border-emerald-200 hover:shadow-xl transition-all text-left group"
+              >
+                <div className="flex items-center gap-5">
+                  <HelpCircle className="text-gray-300 dark:text-slate-400 group-hover:text-emerald-500 transition-all" />
+                  <span className="font-black text-gray-700 dark:text-white">Central de Ajuda</span>
+                </div>
+                <ChevronRight className="text-gray-200 dark:text-slate-500 group-hover:text-emerald-500" size={20} />
+              </button>
+            )}
 
             <button
               onClick={onLogout}
@@ -297,81 +245,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onLogout }) => {
         </div>
       )}
 
-      {/* MODAL HELP CHAT */}
+      {/* HELP CHAT */}
       {showHelpChat && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowHelpChat(false)}>
-          <div
-            className="bg-white dark:bg-slate-800 md:rounded-[32px] w-full max-w-lg h-full md:h-[80vh] flex flex-col shadow-2xl animate-scale-in overflow-hidden"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="bg-emerald-600 p-4 md:p-6 flex items-center justify-between text-white shadow-md z-10">
-              <div className="flex items-center gap-3">
-                <button onClick={() => setShowHelpChat(false)} className="hover:bg-white/20 p-2 rounded-full transition-all">
-                  <ArrowLeft size={20} />
-                </button>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                    <MessageCircle size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-black text-sm md:text-base">Suporte Sabor e Medida</h3>
-                    <p className="text-emerald-100 text-xs font-medium flex items-center gap-1">
-                      <span className="w-2 h-2 bg-emerald-300 rounded-full animate-pulse"></span> Online agora
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-grow bg-[#E5DDD5] dark:bg-slate-900 p-4 overflow-y-auto space-y-3">
-              <div className="flex justify-center my-4">
-                <span className="bg-emerald-100 dark:bg-slate-800 text-emerald-800 dark:text-emerald-400 text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">
-                  As mensagens são criptografadas de ponta a ponta.
-                </span>
-              </div>
-              {chatMessages.length === 0 && (
-                <div className="text-center text-gray-500 dark:text-gray-400 text-sm mt-10">
-                  Olá, <b>{user.profile.name}</b>! <br /> Como podemos te ajudar hoje?
-                </div>
-              )}
-              {chatMessages.map(msg => (
-                <div key={msg.id} className={`flex ${msg.isAdmin ? 'justify-start' : 'justify-end'}`}>
-                  <div className={`max-w-[80%] rounded-2xl px-4 py-2 shadow-sm text-sm font-medium ${!msg.isAdmin
-                    ? 'bg-emerald-600 text-white rounded-tr-none'
-                    : 'bg-white dark:bg-slate-700 text-gray-800 dark:text-white rounded-tl-none'
-                    }`}>
-                    <p>{msg.text}</p>
-                    <p className={`text-[9px] mt-1 text-right ${!msg.isAdmin ? 'text-emerald-200' : 'text-gray-400'}`}>
-                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Input */}
-            <div className="bg-gray-100 dark:bg-slate-800 p-3 md:p-4 flex gap-2">
-              <input
-                type="text"
-                className="flex-grow rounded-full border-none px-4 py-3 focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-700 dark:text-white outline-none shadow-sm"
-                placeholder="Digite sua mensagem..."
-                value={newMessage}
-                onChange={e => setNewMessage(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
-              />
-              <button
-                onClick={handleSendMessage}
-                className="p-3 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 transition-all shadow-md active:scale-95"
-              >
-                <Send size={20} className="ml-0.5" />
-              </button>
-            </div>
-          </div>
-        </div>
+        <HelpChat user={user} onClose={() => setShowHelpChat(false)} />
       )}
-
     </div>
   );
 };
