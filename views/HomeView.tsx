@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { User, VideoLesson, Recipe } from '../types';
-import { Play, Utensils, Clock, TrendingUp, History, Sparkles, Flame, Trophy } from 'lucide-react';
+import { Play, Utensils, Clock, TrendingUp, History, Sparkles, Flame, Trophy, Bell, ChevronRight } from 'lucide-react';
 
 interface HomeViewProps {
   user: User;
@@ -9,12 +9,19 @@ interface HomeViewProps {
   recipes: Recipe[];
   onOpenVideo: (video: VideoLesson) => void;
   onOpenRecipe: (recipe: Recipe) => void;
+  onNavigate: (section: string) => void;
 }
 
-const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo, onOpenRecipe }) => {
-  // Real dynamic sorting for the latest content
+const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo, onOpenRecipe, onNavigate }) => {
+  // Sorting latest content
   const latestVideo = [...videos].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
   const videosCount = user.history.filter(h => h.type === 'video').length;
+
+  // Recommendations Logic: Randomly pick 4 items
+  const recommendations = React.useMemo(() => {
+    const combined = [...recipes.map(r => ({ ...r, type: 'recipe' })), ...videos.map(v => ({ ...v, type: 'video' }))];
+    return combined.sort(() => 0.5 - Math.random()).slice(0, 4);
+  }, [recipes, videos]);
 
   const formatDate = (timestamp: number) => {
     const diff = Date.now() - timestamp;
@@ -30,88 +37,100 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
           <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-2 transition-colors">Bem-vindo, {user.profile.name.split(' ')[0]}! 👋</h1>
           <p className="text-lg text-gray-400 dark:text-gray-500 font-medium transition-colors">Sua jornada para um corpo saudável continua aqui.</p>
         </div>
-        <div className="bg-white dark:bg-slate-800 px-6 py-4 rounded-[28px] border border-gray-100 dark:border-slate-700 shadow-sm flex items-center gap-4 transition-colors">
-          <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/30 text-orange-500 rounded-xl flex items-center justify-center">
-            <Flame size={20} className="fill-current" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Sua sequência</p>
-            <p className="text-xl font-black text-gray-900 dark:text-white transition-colors">
-              {user.profile.streak || 1} Dia{(user.profile.streak || 1) !== 1 ? 's' : ''} Focado
-            </p>
+        <div className="flex gap-4">
+          <div className="bg-white dark:bg-slate-800 px-6 py-4 rounded-[28px] border border-gray-100 dark:border-slate-700 shadow-sm flex items-center gap-4 transition-colors">
+            <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/30 text-orange-500 rounded-xl flex items-center justify-center">
+              <Flame size={20} className="fill-current" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Sua sequência</p>
+              <p className="text-xl font-black text-gray-900 dark:text-white transition-colors">
+                {user.profile.streak || 1} Dia{(user.profile.streak || 1) !== 1 ? 's' : ''} Focado
+              </p>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Stats Board */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-        {[
-          { label: 'Objetivo', value: user.profile.goal === 'perder-peso' ? 'Secar' : 'Saúde', icon: Trophy, color: 'bg-indigo-600 shadow-indigo-100 dark:shadow-indigo-900/20', text: 'text-white' },
-          { label: 'Peso Atual', value: `${user.profile.weight || '--'} kg`, icon: TrendingUp, color: 'bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700', text: 'text-gray-900 dark:text-white' },
-          { label: 'Aulas Vistas', value: videosCount.toString(), icon: Play, color: 'bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700', text: 'text-gray-900 dark:text-white' },
-          { label: 'Favoritos', value: user.favorites.length.toString(), icon: Sparkles, color: 'bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700', text: 'text-gray-900 dark:text-white' }
-        ].map((stat, i) => (
-          <div key={i} className={`${stat.color} p-8 rounded-[40px] shadow-xl flex flex-col justify-between h-48 border transition-all hover:-translate-y-1`}>
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${stat.text === 'text-white' ? 'bg-white/20' : 'bg-gray-50 dark:bg-slate-700 text-emerald-500'}`}>
-              <stat.icon size={24} />
-            </div>
-            <div>
-              <p className={`text-xs font-bold uppercase tracking-[0.2em] mb-1 ${stat.text === 'text-white' ? 'opacity-70' : 'text-gray-400 dark:text-gray-500'}`}>{stat.label}</p>
-              <p className={`text-3xl font-black ${stat.text}`}>{stat.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+      <div className="grid xl:grid-cols-4 gap-8">
+        {/* Main Content Area */}
+        <div className="xl:col-span-3 space-y-12">
 
-      <div className="grid xl:grid-cols-3 gap-12">
-        <div className="xl:col-span-2 space-y-12">
-          {/* Main Hero Highlight */}
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { label: 'Objetivo', value: user.profile.goal === 'perder-peso' ? 'Secar' : 'Saúde', icon: Trophy, color: 'bg-indigo-600' },
+              { label: 'Peso Atual', value: `${user.profile.weight || '--'} kg`, icon: TrendingUp, color: 'bg-emerald-500' },
+              { label: 'Aulas Vistas', value: videosCount.toString(), icon: Play, color: 'bg-blue-500' },
+              { label: 'Favoritos', value: user.favorites.length.toString(), icon: Sparkles, color: 'bg-purple-500' }
+            ].map((stat, i) => (
+              <div key={i} className={`${stat.color} p-6 rounded-[32px] text-white shadow-xl shadow-gray-200 dark:shadow-none`}>
+                <div className="bg-white/20 w-10 h-10 rounded-xl flex items-center justify-center mb-4">
+                  <stat.icon size={20} />
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">{stat.label}</p>
+                <p className="text-2xl font-black">{stat.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Featured Highlight */}
           <section>
-            <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-8 flex items-center gap-3 transition-colors">
+            <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-8 flex items-center gap-3">
               <Sparkles size={24} className="text-emerald-500" /> Destaque Exclusivo
             </h2>
             {latestVideo && (
               <div
                 onClick={() => onOpenVideo(latestVideo)}
-                className="group relative h-[420px] rounded-[48px] overflow-hidden cursor-pointer shadow-2xl shadow-emerald-900/10"
+                className="group relative h-[380px] rounded-[48px] overflow-hidden cursor-pointer shadow-2xl"
               >
                 <img src={latestVideo.thumbnail} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s]" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent p-12 flex flex-col justify-end">
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent p-10 flex flex-col justify-end">
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="bg-emerald-500 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg">Lançamento</span>
-                    <span className="bg-white/20 backdrop-blur-md text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest">Premium</span>
+                    <span className="bg-emerald-500 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest">Novo</span>
+                    <span className="bg-white/20 backdrop-blur-md text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest">{latestVideo.category}</span>
                   </div>
-                  <h3 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight max-w-2xl">{latestVideo.title}</h3>
-                  <div className="flex items-center gap-8 text-white/70 font-bold text-sm">
-                    <span className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-2xl"><Clock size={18} /> {latestVideo.duration}</span>
-                    <button className="flex items-center gap-3 bg-white text-emerald-600 px-8 py-3 rounded-2xl font-black group-hover:bg-emerald-50 transition-all">
-                      <Play size={20} className="fill-current" /> Assistir Agora
+                  <h3 className="text-3xl md:text-4xl font-black text-white mb-6 leading-tight max-w-2xl">{latestVideo.title}</h3>
+                  <div className="flex items-center gap-6">
+                    <button className="flex items-center gap-3 bg-white text-emerald-600 px-8 py-3 rounded-2xl font-black hover:bg-emerald-50 transition-all">
+                      <Play size={20} className="fill-current" /> Começar Assistir
                     </button>
+                    <span className="flex items-center gap-2 text-white/80 font-bold text-sm">
+                      <Clock size={18} /> {latestVideo.duration}
+                    </span>
                   </div>
                 </div>
               </div>
             )}
           </section>
 
-          {/* Quick Access Grid */}
+          {/* Recommendations Grid */}
           <section>
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-black text-gray-900 dark:text-white transition-colors">Recomendados para Você</h2>
-              <button className="text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:underline">Ver tudo</button>
+              <h2 className="text-2xl font-black text-gray-900 dark:text-white">Recomendados para Você</h2>
+              <button
+                onClick={() => onNavigate('recipes')}
+                className="flex items-center gap-2 text-sm font-black text-emerald-500 hover:text-emerald-600 transition-all"
+              >
+                Ver tudo <ChevronRight size={16} />
+              </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {recipes.slice(0, 4).map(recipe => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {recommendations.map((item: any, i) => (
                 <div
-                  key={recipe.id}
-                  onClick={() => onOpenRecipe(recipe)}
-                  className="flex items-center gap-5 bg-white dark:bg-slate-800 p-6 rounded-[32px] border border-gray-100 dark:border-slate-700 hover:border-emerald-200 dark:hover:border-emerald-900 cursor-pointer transition-all hover:shadow-2xl shadow-emerald-900/5 group"
+                  key={i}
+                  onClick={() => item.type === 'video' ? onOpenVideo(item) : onOpenRecipe(item)}
+                  className="flex items-center gap-5 bg-white dark:bg-slate-800 p-5 rounded-[32px] border border-gray-100 dark:border-slate-700 hover:border-emerald-200 cursor-pointer transition-all hover:shadow-xl group"
                 >
-                  <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-md shrink-0">
-                    <img src={recipe.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <div className="w-20 h-20 rounded-2xl overflow-hidden shrink-0">
+                    <img src={item.image || item.thumbnail} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   </div>
-                  <div>
-                    <span className="text-[10px] font-black text-emerald-500 dark:text-emerald-400 uppercase tracking-widest block mb-1">{recipe.category}</span>
-                    <h4 className="font-black text-gray-900 dark:text-white text-lg leading-snug group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{recipe.name}</h4>
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest block mb-1">{item.category}</span>
+                    <h4 className="font-black text-gray-900 dark:text-white truncate">{item.name || item.title}</h4>
+                    <p className="text-xs text-gray-400 font-bold flex items-center gap-1 mt-1">
+                      {item.type === 'video' ? <><Play size={12} /> Aula</> : <><Utensils size={12} /> Receita</>}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -119,75 +138,72 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
           </section>
         </div>
 
-        {/* Sidebar Activity */}
-        <aside className="space-y-12">
-          <div className="bg-white dark:bg-slate-800 p-10 rounded-[48px] border border-gray-50 dark:border-slate-700 shadow-sm transition-colors">
-            <h2 className="text-xl font-black text-gray-900 dark:text-white mb-10 flex items-center gap-3 transition-colors">
-              <History size={22} className="text-gray-300 dark:text-gray-500" /> Atividade Recente
+        {/* Info Sidebar */}
+        <aside className="space-y-8">
+          {/* Notifications Panel */}
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-[40px] border border-gray-100 dark:border-slate-700 shadow-sm">
+            <h2 className="text-lg font-black text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+              <Bell size={20} className="text-emerald-500" /> Notificações
             </h2>
-            <div className="space-y-10">
-              {user.history.length === 0 ? (
-                <div className="text-center py-12">
-                  <History className="text-gray-100 dark:text-slate-700 mx-auto mb-4" size={48} />
-                  <p className="text-sm text-gray-400 dark:text-gray-500 font-bold px-4">Explore as receitas para ver seu histórico aqui.</p>
-                </div>
+            <div className="space-y-4">
+              {user.notifications.length === 0 ? (
+                <div className="text-center py-6 text-gray-400 text-xs font-bold">Sem novas notificações</div>
               ) : (
-                user.history.map(activity => (
-                  <div
-                    key={activity.id}
-                    className="flex gap-5 group cursor-pointer relative"
-                    onClick={() => {
-                      if (activity.type === 'video') {
-                        const v = videos.find(v => v.id === activity.contentId);
-                        if (v) onOpenVideo(v);
-                      } else {
-                        const r = recipes.find(r => r.id === activity.contentId);
-                        if (r) onOpenRecipe(r);
-                      }
-                    }}
-                  >
-                    <div className={`w-12 h-12 rounded-[18px] flex-shrink-0 flex items-center justify-center transition-all ${activity.type === 'video' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-500 group-hover:bg-blue-500 group-hover:text-white' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white'}`}>
-                      {activity.type === 'video' ? <Play size={20} className="fill-current" /> : <Utensils size={20} />}
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="font-bold text-gray-900 dark:text-white text-sm truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors pr-4">{activity.title}</h4>
-                      <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-widest">{formatDate(activity.timestamp)}</p>
-                    </div>
+                user.notifications.slice(0, 3).map(n => (
+                  <div key={n.id} className="p-4 bg-gray-50 dark:bg-slate-700/50 rounded-2xl border border-transparent hover:border-emerald-100 transition-all cursor-pointer">
+                    <h5 className="font-bold text-xs text-gray-900 dark:text-white mb-1">{n.title}</h5>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-1">{n.text}</p>
                   </div>
                 ))
               )}
             </div>
           </div>
 
-          <div className="bg-[#0f172a] p-10 rounded-[48px] text-white relative overflow-hidden group shadow-2xl shadow-indigo-900/20">
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
-            <h3 className="text-xl font-black mb-4">
-              {user.profile.plan === 'premium' ? 'Acesso Premium VIP' : user.profile.plan === 'essential' ? 'Plano Essencial' : 'Teste Grátis Ativo'}
-            </h3>
-            <p className="text-slate-400 text-sm font-medium mb-8 leading-relaxed">
-              {user.profile.plan === 'premium'
-                ? 'Você tem acesso total a todo o conteúdo e suporte VIP priorizado.'
-                : user.profile.plan === 'essential'
-                  ? 'Você tem acesso às receitas e 5 vídeo-aulas mensais. Para aulas ilimitadas, mude para o Premium.'
-                  : 'Seu período de 24h de degustação está ativo. Aproveite o conteúdo completo!'}
-            </p>
-            <div className="w-full h-2 bg-white/10 rounded-full mb-8 relative">
-              <div
-                className={`h-full rounded-full shadow-[0_0_15px_rgba(16,185,129,0.5)] ${user.profile.plan === 'premium' ? 'w-[100%] bg-emerald-500' : user.profile.plan === 'essential' ? 'w-[60%] bg-indigo-400' : 'w-[40%] bg-orange-400'}`}
-              ></div>
+          {/* Activity Panel */}
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-[40px] border border-gray-100 dark:border-slate-700 shadow-sm">
+            <h2 className="text-lg font-black text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+              <History size={20} className="text-gray-400" /> Atividades
+            </h2>
+            <div className="space-y-6">
+              {user.history.length === 0 ? (
+                <p className="text-xs text-center text-gray-400 font-bold py-6">Nenhuma atividade registrada.</p>
+              ) : (
+                user.history.slice(0, 4).map(h => (
+                  <div key={h.id} className="flex gap-4 items-center">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${h.type === 'video' ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                      {h.type === 'video' ? <Play size={16} fill="currentColor" /> : <Utensils size={16} />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{h.title}</p>
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{formatDate(h.timestamp)}</p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">
-                Status: {user.profile.plan === 'premium' ? 'Vitalício VM' : user.profile.plan === 'essential' ? 'Ativo' : 'Expira em 24h'}
+            <button
+              onClick={() => onNavigate('home')} // Or some activity specific tab
+              className="w-full mt-8 py-3 rounded-2xl border border-gray-100 dark:border-slate-700 text-[10px] font-black text-gray-400 hover:bg-gray-50 transition-all"
+            >
+              LIMPAR HISTÓRICO
+            </button>
+          </div>
+
+          {/* Plan Card */}
+          <div className="bg-[#0f172a] p-8 rounded-[40px] text-white relative overflow-hidden group">
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500 rounded-full blur-3xl opacity-20"></div>
+            <h3 className="text-lg font-black mb-3">
+              {user.profile.isAdmin ? 'Acesso Administrador' : user.profile.plan === 'premium' ? 'Plano Premium' : 'Plano Grátis'}
+            </h3>
+            <p className="text-slate-400 text-[11px] font-medium mb-6">
+              {user.profile.isAdmin ? 'Você tem controle total sobre os recursos e conteúdos.' : 'Aproveite todos os benefícios do seu acesso atual.'}
+            </p>
+            <div className="flex items-center justify-between mt-auto">
+              <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">
+                Status: {user.profile.isAdmin ? 'Infinity' : 'Ativo'}
               </span>
-              {user.profile.plan !== 'premium' && (
-                <a
-                  href="https://pay.cakto.com.br/yo5n39h_711365"
-                  rel="noopener noreferrer"
-                  className="bg-emerald-500 text-white text-[10px] font-black px-4 py-2 rounded-xl hover:bg-emerald-600 transition-all"
-                >
-                  DESTRAVAR FULL
-                </a>
+              {!user.profile.isAdmin && user.profile.plan !== 'premium' && (
+                <button className="bg-emerald-500 px-4 py-2 rounded-xl text-[9px] font-black uppercase">Fazer Upgrade</button>
               )}
             </div>
           </div>

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { VideoLesson, Recipe, ChatSession, ChatMessage } from '../types';
 import { db } from '../services/database';
-import { Plus, Trash2, Edit, Save, X, Loader2, Link as LinkIcon, Image as ImageIcon, Tag, Play, Utensils, Video, MessageCircle, Send, ArrowLeft, Search } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, Loader2, Link as LinkIcon, Image as ImageIcon, Tag, Play, Utensils, Video, MessageCircle, Send, ArrowLeft, Search, Clock } from 'lucide-react';
 
 interface AdminPanelProps {
   videos: VideoLesson[];
@@ -58,12 +58,27 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
       const sessions = await db.getAllChatSessions();
       setChatSessions(sessions);
     };
+
     if (activeTab === 'support') {
       fetchChatSessions();
       interval = setInterval(fetchChatSessions, 10000);
     }
     return () => clearInterval(interval);
   }, [activeTab]);
+
+  // Auto-detect duration for direct video links
+  useEffect(() => {
+    if (videoForm.videoUrl && videoForm.videoUrl.match(/\.(mp4|webm|ogg|mov)$|^https:\/\/.+google.+/i)) {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.src = videoForm.videoUrl;
+      video.onloadedmetadata = () => {
+        const mins = Math.floor(video.duration / 60);
+        const secs = Math.floor(video.duration % 60);
+        setVideoForm(prev => ({ ...prev, duration: `${mins}:${secs < 10 ? '0' : ''}${secs}` }));
+      };
+    }
+  }, [videoForm.videoUrl]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -422,14 +437,23 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
                       </div>
                     </div>
                     <div className="space-y-6 flex flex-col h-full">
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Descrição curta</label>
+                      <textarea
+                        value={videoForm.shortDescription}
+                        onChange={e => setVideoForm({ ...videoForm, shortDescription: e.target.value })}
+                        className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none h-[80px] resize-none font-medium transition-all"
+                        placeholder="Uma breve descrição do vídeo"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Duração (Min:Seg)</label>
+                      <div className="relative">
+                        <Clock className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                         <input
                           type="text"
-                          value={videoForm.shortDescription}
-                          onChange={e => setVideoForm({ ...videoForm, shortDescription: e.target.value })}
-                          className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none font-medium transition-all"
-                          placeholder="Uma breve descrição do vídeo"
+                          value={videoForm.duration}
+                          onChange={e => setVideoForm({ ...videoForm, duration: e.target.value })}
+                          className="w-full pl-14 pr-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none font-bold transition-all"
+                          placeholder="Ex: 12:45"
                         />
                       </div>
                       <div className="flex-grow">

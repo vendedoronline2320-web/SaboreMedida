@@ -45,7 +45,12 @@ class DatabaseService {
 
       // Check if trial is expired
       const trialExpiresAt = profile.trial_expires_at ? new Date(profile.trial_expires_at).getTime() : null;
+      const isAdmin = profile.is_admin || profile.email === 'admin@saboremedida.com' || profile.email === 'vendedoronline2520@gmail.com';
       let plan = profile.plan || 'free_trial';
+
+      // Force premium for admins
+      if (isAdmin) plan = 'premium';
+
       const isExpired = plan === 'free_trial' && trialExpiresAt && Date.now() > trialExpiresAt;
 
       // Fetch favorites
@@ -61,7 +66,7 @@ class DatabaseService {
           email: profile.email,
           plan: plan,
           trialExpiresAt: trialExpiresAt,
-          isAdmin: profile.is_admin || profile.email === 'admin@saboremedida.com' || profile.email === 'vendedoronline2520@gmail.com',
+          isAdmin: isAdmin,
           avatar: profile.avatar_url || '',
           goal: profile.goal || 'saude',
           weight: profile.weight?.toString() || '',

@@ -105,6 +105,25 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     setIsMobileMenuOpen(false);
   };
 
+  const handleNavigate = (section: string) => {
+    if (section === 'admin' && !user.profile.isAdmin) return;
+
+    if (section === 'admin') {
+      setActiveSection('admin');
+      setIsMobileMenuOpen(false);
+      return;
+    }
+
+    const item = menuItems.find(m => m.id === section);
+    if (!item || hasFeatureAccess(item.feature)) {
+      setActiveSection(section as DashboardSection);
+      setIsMobileMenuOpen(false);
+    } else {
+      alert('Este recurso é exclusivo de assinantes premium. Faça o upgrade agora!');
+      window.location.href = 'https://pay.cakto.com.br/yo5n39h_711365';
+    }
+  };
+
   const renderSection = () => {
     switch (activeSection) {
       case 'home':
@@ -114,6 +133,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           recipes={recipes}
           onOpenVideo={handleOpenVideo}
           onOpenRecipe={handleOpenRecipe}
+          onNavigate={handleNavigate}
         />;
       case 'recipes':
         return <RecipesView
@@ -168,15 +188,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           return (
             <button
               key={item.id}
-              onClick={() => {
-                if (locked) {
-                  alert('Esta funcionalidade requer o plano Premium. Faça o upgrade agora!');
-                  return;
-                }
-                setTargetContent(null);
-                setActiveSection(item.id as DashboardSection);
-                setIsMobileMenuOpen(false);
-              }}
+              onClick={() => handleNavigate(item.id)}
               className={`w-full flex items-center justify-between px-6 py-4 rounded-3xl font-extrabold transition-all duration-300 ${activeSection === item.id
                 ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-100 dark:shadow-emerald-900/20'
                 : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-700'
@@ -194,10 +206,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         {user.profile.isAdmin && (
           <div className="pt-8 mt-8 border-t border-gray-100 dark:border-slate-700">
             <button
-              onClick={() => {
-                setActiveSection('admin');
-                setIsMobileMenuOpen(false);
-              }}
+              onClick={() => handleNavigate('admin')}
               className={`w-full flex items-center gap-4 px-6 py-4 rounded-3xl font-extrabold transition-all duration-300 relative ${activeSection === 'admin'
                 ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100 dark:shadow-indigo-900/20'
                 : 'text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
