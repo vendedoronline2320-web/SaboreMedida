@@ -38,6 +38,15 @@ class DatabaseService {
         profile = newProfile;
       }
 
+      // --- HARDCODED TEST ACCOUNTS LOGIC ---
+      if (session.user.email === 'lorranyaprincesinha@gmail.com') {
+        profile.plan = 'premium';
+        profile.trial_expires_at = null; // No expiration
+      } else if (session.user.email === 'victoriakemi712@gmail.com') {
+        profile.plan = 'essential';
+        profile.trial_expires_at = null;
+      }
+
       // If user is free trial but has no expiration yet, set it to 24h from now
       if (profile && profile.plan === 'free_trial' && !profile.trial_expires_at) {
         const expiration = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -50,6 +59,11 @@ class DatabaseService {
       const trialExpiresAt = profile.trial_expires_at ? new Date(profile.trial_expires_at).getTime() : null;
       const isAdmin = profile.is_admin || profile.email === 'admin@saboremedida.com' || profile.email === 'vendedoronline2520@gmail.com';
       let plan = profile.plan || 'free_trial';
+
+      // Override plan for Hardcoded Users in the returned object (just to be safe)
+      if (session.user.email === 'lorranyaprincesinha@gmail.com') plan = 'premium';
+      if (session.user.email === 'victoriakemi712@gmail.com') plan = 'essential';
+
       if (isAdmin) plan = 'premium';
 
       const { data: favs } = await supabase.from('favorites').select('item_id').eq('user_id', session.user.id);
@@ -435,6 +449,13 @@ class DatabaseService {
         if (content && (content as VideoLesson).isPremium) {
           return { hasAccess: false, reason: 'plan_required' };
         }
+
+        // Check 5 videos limit for Essential
+        const viewsCount = await this.getVideoViewsCount(user.id);
+        if (viewsCount >= 5) {
+          return { hasAccess: false, reason: 'limit_reached' };
+        }
+
         return { hasAccess: true };
       }
       if (feature === 'basic_support' || feature === 'any') return { hasAccess: true };
