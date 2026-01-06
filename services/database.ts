@@ -346,7 +346,8 @@ class DatabaseService {
   async clearUserActivity() {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      await supabase.from('user_activities').delete().eq('user_id', session.user.id);
+      const { error } = await supabase.from('user_activities').delete().eq('user_id', session.user.id);
+      if (error) console.error('[DB] Error clearing history:', error);
     }
   }
 

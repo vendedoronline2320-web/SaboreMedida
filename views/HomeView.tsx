@@ -76,9 +76,11 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
 
   const handleClearHistory = async () => {
     if (confirm('Deseja realmente limpar seu histórico de atividades?')) {
+      setIsRefreshing(true);
       await db.clearUserActivity();
       const updatedUser = await db.getCurrentUser();
       if (updatedUser) setUser(updatedUser);
+      setIsRefreshing(false);
     }
   };
 
@@ -113,9 +115,9 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
         </div>
       </header>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Main Content Area */}
-        <div className="xl:col-span-3 space-y-8 md:space-y-12">
+        <div className="xl:col-span-2 space-y-8 md:space-y-12">
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
@@ -225,7 +227,7 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
         {/* Sidebar Activity History */}
         <div className="space-y-8">
           <div className="bg-white dark:bg-slate-800 rounded-[40px] border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm transition-colors flex flex-col h-[500px]">
-            <div className="p-6 md:p-8 border-b border-gray-50 dark:border-slate-700 flex justify-between items-center bg-gray-50/30 dark:bg-slate-700/30">
+            <div className="p-4 md:p-6 border-b border-gray-50 dark:border-slate-700 flex justify-between items-center bg-gray-50/30 dark:bg-slate-700/30">
               <h3 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-3 uppercase tracking-widest">
                 <History size={18} className="text-emerald-500" /> Histórico
               </h3>
