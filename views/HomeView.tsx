@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { User, VideoLesson, Recipe } from '../types';
-import { Play, Utensils, Clock, TrendingUp, History, Sparkles, Flame, Trophy, Bell, ChevronRight, Heart, Lock, LogOut } from 'lucide-react';
+import { User, VideoLesson, Recipe, Notification } from '../types';
+import { Play, Utensils, Clock, TrendingUp, History, Sparkles, Flame, Trophy, Bell, ChevronRight, Heart, Lock, LogOut, RefreshCcw } from 'lucide-react';
+import { db } from '../services/database';
 
 interface HomeViewProps {
   user: User;
@@ -11,16 +12,18 @@ interface HomeViewProps {
   onOpenRecipe: (recipe: Recipe) => void;
   onNavigate: (section: string) => void;
   onNotificationClick: (notification: Notification) => void;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
-const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo, onOpenRecipe, onNavigate, onNotificationClick }) => {
+const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo, onOpenRecipe, onNavigate, onNotificationClick, setUser }) => {
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
+
   // Sorting latest content
   const latestVideo = [...videos].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
-  const videosCount = user.history.filter(h => h.type === 'video').length;
+  const videosCount = user.history.filter(h => h.type === 'view_video' || h.type === 'video').length;
 
   // Recommendations Logic: Category-based
   const recommendations = React.useMemo(() => {
-    // 1. Get user interest categories
     const viewedCategories = user.history
       .map(h => {
         const item = [...videos, ...recipes].find(i => i.id === h.contentId);
@@ -38,13 +41,11 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
     const interests = [...viewedCategories, ...favCategories];
     const topInterest = interests.sort((a, b) => interests.filter(v => v === b).length - interests.filter(v => v === a).length)[0];
 
-    // 2. Filter items
     const combined = [
       ...recipes.map(r => ({ ...r, type: 'recipe' as const })),
       ...videos.map(v => ({ ...v, type: 'video' as const }))
     ];
 
-    // Priority: items from top categories user hasn't seen much of
     let filtered = combined.filter(item => item.category === topInterest);
     if (filtered.length < 4) {
       filtered = [...filtered, ...combined.filter(item => item.category !== topInterest)];
@@ -60,6 +61,21 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
     if (diff < 3600000) return 'Agora pouco';
     if (diff < 86400000) return `Há ${Math.floor(diff / 3600000)}h`;
     return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(timestamp);
+  };
+
+  const handleRefreshActivities = async () => {
+    setIsRefreshing(true);
+    const updatedUser = await db.getCurrentUser();
+    if (updatedUser) setUser(updatedUser);
+    setTimeout(() => setIsRefreshing(false), 800);
+  };
+
+  const handleClearHistory = async () => {
+    if (confirm('Deseja realmente limpar seu histórico de atividades?')) {
+      await db.clearUserActivity();
+      const updatedUser = await db.getCurrentUser();
+      if (updatedUser) setUser(updatedUser);
+    }
   };
 
   return (
@@ -219,9 +235,19 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
 
           {/* Activity Panel */}
           <div className="bg-white dark:bg-slate-800 p-8 rounded-[40px] border border-gray-100 dark:border-slate-700 shadow-sm">
-            <h2 className="text-lg font-black text-gray-900 dark:text-white mb-6 flex items-center gap-3">
-              <History size={20} className="text-gray-400" /> Atividades
-            </h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-3">
+                <History size={20} className="text-gray-400" /> Atividades
+              </h2>
+              <button
+                onClick={handleRefreshActivities}
+                className={`p-2 text-gray-300 hover:text-emerald-500 transition-all ${isRefreshing ? 'animate-spin' : ''}`}
+                title="Atualizar"
+              >
+                <RefreshCcw size={16} />
+              </button>
+            </div>
+
             <div className="space-y-6">
               {user.history.length === 0 ? (
                 <p className="text-xs text-center text-gray-400 font-bold py-6">Nenhuma atividade registrada.</p>
@@ -233,7 +259,7 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
                   else if (h.type === 'view_recipe' || h.type === 'recipe') { Icon = Utensils; color = 'bg-orange-50 text-orange-500'; }
                   else if (h.type === 'favorite') { Icon = Heart; color = 'bg-red-50 text-red-500'; }
                   else if (h.type === 'login') { Icon = LogOut; color = 'bg-emerald-50 text-emerald-500'; }
-                  else if (h.type === 'upload_video') { Icon = TrendingUp; color = 'bg-purple-50 text-purple-500'; }
+                  else if (h.type === 'upload_video' || h.type === 'upload_image' || h.type === 'upload_recipe') { Icon = TrendingUp; color = 'bg-purple-50 text-purple-500'; }
                   else if (h.type === 'welcome') { Icon = Sparkles; color = 'bg-yellow-50 text-yellow-500'; }
 
                   return (
@@ -251,15 +277,15 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
               )}
             </div>
             <button
-              onClick={() => onNavigate('home')} // Or some activity specific tab
-              className="w-full mt-8 py-3 rounded-2xl border border-gray-100 dark:border-slate-700 text-[10px] font-black text-gray-400 hover:bg-gray-50 transition-all"
+              onClick={handleClearHistory}
+              className="w-full mt-8 py-3 rounded-2xl border border-gray-100 dark:border-slate-700 text-[10px] font-black text-gray-400 hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all"
             >
               LIMPAR HISTÓRICO
             </button>
           </div>
 
           {/* Plan Card */}
-          <div className="bg-[#0f172a] p-8 rounded-[40px] text-white relative overflow-hidden group">
+          <div className="bg-[#0f172a] p-8 rounded-[40px] text-white relative overflow-hidden group transition-colors">
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500 rounded-full blur-3xl opacity-20"></div>
             <h3 className="text-lg font-black mb-3">
               {user.profile.isAdmin ? 'Acesso Administrador' : user.profile.plan === 'premium' ? 'Plano Premium' : 'Plano Grátis'}

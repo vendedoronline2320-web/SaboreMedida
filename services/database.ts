@@ -1,3 +1,4 @@
+
 import { supabase } from './supabase';
 import { User, Recipe, VideoLesson, UserProfile, Activity, Notification, ChatMessage, ChatSession } from '../types';
 
@@ -195,13 +196,19 @@ class DatabaseService {
       short_description: video.shortDescription, category: video.category,
       video_url: this.getDirectLink(video.videoUrl)
     };
+
+    let result;
     if (video.id && video.id.length > 20) {
-      await supabase.from('video_lessons').update(payload).eq('id', video.id);
+      result = await supabase.from('video_lessons').update(payload).eq('id', video.id).select().single();
     } else {
-      const { error } = await supabase.from('video_lessons').insert([payload]);
-      if (error) throw error;
+      result = await supabase.from('video_lessons').insert([payload]).select().single();
       const { data: { session } } = await supabase.auth.getSession();
       if (session) await this.recordActivity(session.user.id, 'upload_video', `Publicou: ${video.title}`);
+
+      // Notify users about new video
+      if (result.data) {
+        await this.notifyAllUsers('video', `Nova Aula: ${video.title}`, `Confira o novo vídeo na categoria ${video.category}!`, `videos?id=${result.data.id}`);
+      }
     }
   }
 
@@ -213,15 +220,39 @@ class DatabaseService {
       category: recipe.category, description: recipe.description,
       ingredients: recipe.ingredients, instructions: recipe.instructions, time: recipe.time
     };
+
+    let result;
     if (recipe.id && recipe.id.length > 20) {
-      await supabase.from('recipes').update(payload).eq('id', recipe.id);
+      result = await supabase.from('recipes').update(payload).eq('id', recipe.id).select().single();
     } else {
-      const { error } = await supabase.from('recipes').insert([payload]);
-      if (error) throw error;
+      result = await supabase.from('recipes').insert([payload]).select().single();
+      if (result.data) {
+        await this.notifyAllUsers('system', `Nova Receita: ${recipe.name}`, `Confira nossa nova receita de ${recipe.category}!`, `recipes?id=${result.data.id}`);
+      }
     }
   }
 
   async deleteRecipe(id: string) { await supabase.from('recipes').delete().eq('id', id); }
+
+  // --- Notifications Helper ---
+
+  private async notifyAllUsers(type: string, title: string, content: string, link: string) {
+    try {
+      const { data: users } = await supabase.from('profiles').select('id');
+      if (users && users.length > 0) {
+        const notifications = users.map(u => ({
+          user_id: u.id,
+          type: type,
+          title: title,
+          content: content,
+          payload: { link }
+        }));
+        await supabase.from('notifications').insert(notifications);
+      }
+    } catch (err) {
+      console.error('Error notifying users:', err);
+    }
+  }
 
   // --- Interactions ---
 
@@ -284,6 +315,13 @@ class DatabaseService {
       if (error) console.error('recordActivity error:', error);
     } catch (err) {
       console.error('recordActivity exception:', err);
+    }
+  }
+
+  async clearUserActivity() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      await supabase.from('user_activities').delete().eq('user_id', session.user.id);
     }
   }
 

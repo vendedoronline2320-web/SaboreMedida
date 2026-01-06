@@ -157,6 +157,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           onOpenRecipe={handleOpenRecipe}
           onNavigate={handleNavigate}
           onNotificationClick={handleReadNotification}
+          setUser={setUser}
         />;
       case 'recipes':
         return <RecipesView
