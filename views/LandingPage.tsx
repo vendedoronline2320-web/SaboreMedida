@@ -398,7 +398,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
                 <span className="text-slate-300 font-black ml-1 text-2xl">,00</span>
               </div>
               <ul className="space-y-6 mb-12 flex-grow">
-                {["Top 10 Receitas", "Guia de Substituições", "Suporte via E-mail"].map((item, i) => (
+                {["Acesso a até 5 vídeo aulas comuns por mês", "Suporte comum"].map((item, i) => (
                   <li key={i} className="flex items-center gap-4 text-slate-600 font-bold">
                     <div className="w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500">
                       <CheckCircle size={14} />
@@ -409,7 +409,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
               </ul>
               <a
                 href="https://pay.cakto.com.br/sqpgdf5_711359"
-                className="w-full py-6 rounded-3xl bg-slate-900 text-white font-black hover:bg-slate-800 transition-all text-center block text-lg shadow-xl"
+                className="w-full py-6 rounded-3xl bg-slate-900 text-white font-black hover:bg-slate-800 transition-all text-center block text-lg shadow-xl animate-pulse"
               >
                 Selecionar Essencial
               </a>
@@ -436,11 +436,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
 
               <ul className="space-y-6 mb-12 flex-grow">
                 {[
-                  "Todas as Receitas + Novas todo mês",
-                  "Módulo de Vídeo Aulas Premium",
-                  "Área de Favoritos Personalizada",
-                  "Suporte Prioritário VIP",
-                  "Bônus: Lista de Compras Inteligente"
+                  "Todas as receitas + novas todo mês",
+                  "Vídeo aulas",
+                  "Conteúdo premium",
+                  "Área de favoritos",
+                  "Suporte prioritário"
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-4 text-slate-200 font-bold">
                     <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
@@ -452,7 +452,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
               </ul>
               <a
                 href="https://pay.cakto.com.br/yo5n39h_711365"
-                className="w-full py-6 rounded-3xl bg-emerald-500 text-white font-black hover:bg-emerald-600 transition-all text-center block text-xl shadow-[0_20px_40px_-10px_rgba(16,185,129,0.4)]"
+                className="w-full py-6 rounded-3xl bg-emerald-500 text-white font-black hover:bg-emerald-600 transition-all text-center block text-xl shadow-[0_20px_40px_-10px_rgba(16,185,129,0.4)] animate-pulse"
               >
                 Garantir Acesso Premium
               </a>
