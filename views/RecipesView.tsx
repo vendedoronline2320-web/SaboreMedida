@@ -65,7 +65,10 @@ const RecipesView: React.FC<RecipesViewProps> = ({ user, recipes, favorites, onT
               </div>
               <button
                 onClick={() => {
-                  if (user.profile.plan === 'essential') {
+                  const isTrialActive = user.profile.plan === 'free_trial' && (user.profile.trialExpiresAt || 0) > Date.now();
+                  const isPremium = user.profile.plan === 'premium' || user.profile.isAdmin || isTrialActive;
+
+                  if (!isPremium) {
                     if (onRequireUpgrade) onRequireUpgrade();
                     else alert('Favoritos é uma funcionalidade Premium.');
                     return;
@@ -78,7 +81,7 @@ const RecipesView: React.FC<RecipesViewProps> = ({ user, recipes, favorites, onT
                   }`}
               >
                 <Heart size={24} className={favorites.includes(selectedRecipe.id) ? "fill-current" : ""} />
-                {user.profile.plan === 'essential' && (
+                {!(user.profile.plan === 'premium' || user.profile.isAdmin || (user.profile.plan === 'free_trial' && (user.profile.trialExpiresAt || 0) > Date.now())) && (
                   <div className="absolute -top-1 -right-1 bg-white dark:bg-slate-800 rounded-full p-1 shadow-sm border border-gray-100 dark:border-slate-600">
                     <Lock size={12} className="text-amber-500" />
                   </div>
@@ -141,7 +144,8 @@ const RecipesView: React.FC<RecipesViewProps> = ({ user, recipes, favorites, onT
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
         {recipes.map((recipe) => {
           const isTrialActive = user.profile.plan === 'free_trial' && (user.profile.trialExpiresAt || 0) > Date.now();
-          const locked = user.profile.plan === 'essential' && !user.profile.isAdmin && !isTrialActive;
+          const isPremium = user.profile.plan === 'premium' || user.profile.isAdmin || isTrialActive;
+          const locked = !isPremium;
 
           return (
             <div
@@ -174,7 +178,10 @@ const RecipesView: React.FC<RecipesViewProps> = ({ user, recipes, favorites, onT
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (user.profile.plan === 'essential') {
+                      const isTrialActive = user.profile.plan === 'free_trial' && (user.profile.trialExpiresAt || 0) > Date.now();
+                      const isPremium = user.profile.plan === 'premium' || user.profile.isAdmin || isTrialActive;
+
+                      if (!isPremium) {
                         if (onRequireUpgrade) onRequireUpgrade();
                         else alert('Favoritos é uma funcionalidade Premium.');
                         return;

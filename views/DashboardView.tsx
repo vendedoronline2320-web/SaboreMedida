@@ -199,6 +199,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             onNavigate={handleNavigate}
             onNotificationClick={handleReadNotification}
             onRequireUpgrade={() => setShowUpgradeModal(true)}
+            onOpenChat={() => setShowFloatingChat(true)}
             setUser={setUser}
           />
         );
@@ -252,7 +253,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           />
         );
       default:
-        return <HomeView user={user} videos={videos} recipes={recipes} onOpenVideo={handleOpenVideo} onOpenRecipe={handleOpenRecipe} onNavigate={handleNavigate} onNotificationClick={handleReadNotification} onRequireUpgrade={() => setShowUpgradeModal(true)} setUser={setUser} />;
+        return <HomeView user={user} videos={videos} recipes={recipes} onOpenVideo={handleOpenVideo} onOpenRecipe={handleOpenRecipe} onNavigate={handleNavigate} onNotificationClick={handleReadNotification} onRequireUpgrade={() => setShowUpgradeModal(true)} onOpenChat={() => setShowFloatingChat(true)} setUser={setUser} />;
     }
   };
 
@@ -495,11 +496,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             <>
               <button
                 onClick={() => setShowFloatingChat(!showFloatingChat)}
-                className="fixed bottom-6 right-6 w-14 h-14 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-2xl hover:bg-emerald-600 hover:scale-110 active:scale-95 transition-all z-50 animate-bounce-slow"
+                className={`fixed bottom-6 right-6 w-14 h-14 text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all z-50 animate-bounce-slow ${(user.profile.plan === 'premium' || user.profile.isAdmin || isTrialActive) ? 'bg-indigo-600' : 'bg-emerald-500'
+                  }`}
               >
                 {showFloatingChat ? <X size={24} /> : <MessageCircle size={24} />}
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center">
-                  <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                  <span className={`w-2 h-2 rounded-full animate-pulse ${(user.profile.plan === 'premium' || user.profile.isAdmin || isTrialActive) ? 'bg-indigo-400' : 'bg-emerald-500'}`}></span>
                 </span>
               </button>
 

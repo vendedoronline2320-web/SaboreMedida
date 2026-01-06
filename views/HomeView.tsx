@@ -13,10 +13,11 @@ interface HomeViewProps {
   onNavigate: (section: string) => void;
   onNotificationClick: (notification: Notification) => void;
   onRequireUpgrade?: () => void;
+  onOpenChat?: () => void;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
-const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo, onOpenRecipe, onNavigate, onNotificationClick, onRequireUpgrade, setUser }) => {
+const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo, onOpenRecipe, onNavigate, onNotificationClick, onRequireUpgrade, onOpenChat, setUser }) => {
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
   // Sorting latest content
@@ -270,9 +271,9 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
                   >
                     <div className="flex gap-4 cursor-pointer p-2 rounded-2xl hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-all">
                       <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ${activity.type.includes('video') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-500' :
-                          activity.type.includes('recipe') ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500' :
-                            activity.type === 'favorite' ? 'bg-red-50 dark:bg-red-900/10 text-red-500' :
-                              'bg-gray-50 dark:bg-slate-700 text-gray-400'
+                        activity.type.includes('recipe') ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500' :
+                          activity.type === 'favorite' ? 'bg-red-50 dark:bg-red-900/10 text-red-500' :
+                            'bg-gray-50 dark:bg-slate-700 text-gray-400'
                         }`}>
                         {activity.type.includes('video') ? <Play size={18} /> :
                           activity.type.includes('recipe') ? <Utensils size={18} /> :
@@ -298,7 +299,7 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
               <h4 className="text-xl font-black mb-2">Suporte Prioritário</h4>
               <p className="text-sm font-bold text-indigo-100/80 mb-6 leading-relaxed">Dúvidas sobre sua dieta? Nossa equipe está pronta para te ajudar agora.</p>
               <button
-                onClick={() => onNavigate('settings')}
+                onClick={() => onOpenChat && onOpenChat()}
                 className="w-full py-4 bg-white text-indigo-600 font-black rounded-2xl shadow-lg hover:bg-indigo-50 transition-all"
               >
                 Falar com Especialista

@@ -198,7 +198,8 @@ const VideoLessonsView: React.FC<VideoLessonsViewProps> = ({ user, videos, favor
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 px-2 md:px-0">
         {videos.map((video) => {
           const isTrialActive = user.profile.plan === 'free_trial' && (user.profile.trialExpiresAt || 0) > Date.now();
-          const locked = video.isPremium && user.profile.plan === 'essential' && !user.profile.isAdmin && !isTrialActive;
+          const isPremium = user.profile.plan === 'premium' || user.profile.isAdmin || isTrialActive;
+          const locked = video.isPremium && !isPremium;
 
           return (
             <div
