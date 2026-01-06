@@ -36,7 +36,7 @@ export interface Notification {
 
 export interface Activity {
   id: string;
-  type: 'video' | 'recipe';
+  type: 'video' | 'recipe' | 'view_video' | 'view_recipe' | 'favorite' | 'login' | 'logout' | 'welcome' | 'profile_update' | 'upload_image' | 'upload_video';
   contentId: string;
   timestamp: number;
   title: string;

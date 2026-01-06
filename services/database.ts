@@ -204,16 +204,43 @@ class DatabaseService {
   // --- Interactions ---
 
   async toggleFavorite(itemId: string, type: 'recipe' | 'video'): Promise<string[]> {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return [];
-    const { data: existing } = await supabase.from('favorites').select('*').eq('user_id', session.user.id).eq('item_id', itemId).maybeSingle();
-    if (existing) await supabase.from('favorites').delete().eq('id', existing.id);
-    else {
-      await supabase.from('favorites').insert([{ user_id: session.user.id, item_id: itemId, type }]);
-      await this.recordActivity(session.user.id, 'favorite', `Favoritou um ${type === 'video' ? 'vídeo' : 'receita'}`);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return [];
+
+      const { data: existing, error: findError } = await supabase.from('favorites')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('item_id', itemId)
+        .maybeSingle();
+
+      if (findError) throw findError;
+
+      if (existing) {
+        const { error: delError } = await supabase.from('favorites')
+          .delete()
+          .eq('user_id', session.user.id)
+          .eq('item_id', itemId);
+        if (delError) throw delError;
+      } else {
+        const { error: insError } = await supabase.from('favorites')
+          .insert([{ user_id: session.user.id, item_id: itemId, type }]);
+        if (insError) throw insError;
+        await this.recordActivity(session.user.id, 'favorite', `Favoritou um ${type === 'video' ? 'vídeo' : 'receita'}`);
+      }
+
+      const { data: favs } = await supabase.from('favorites').select('item_id').eq('user_id', session.user.id);
+      return (favs || []).map(f => f.item_id);
+    } catch (err: any) {
+      console.error('toggleFavorite error:', err);
+      // Fallback return existing favorites if possible
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: favs } = await supabase.from('favorites').select('item_id').eq('user_id', session.user.id);
+        return (favs || []).map(f => f.item_id);
+      }
+      return [];
     }
-    const { data: favs } = await supabase.from('favorites').select('item_id').eq('user_id', session.user.id);
-    return (favs || []).map(f => f.item_id);
   }
 
   async addToHistory(type: 'video' | 'recipe', contentId: string, title: string) {
@@ -226,7 +253,17 @@ class DatabaseService {
   }
 
   async recordActivity(userId: string, type: string, title: string, itemId?: string) {
-    await supabase.from('user_activities').insert([{ user_id: userId, type, title, item_id: itemId }]);
+    try {
+      const { error } = await supabase.from('user_activities').insert([{
+        user_id: userId,
+        type: type,
+        title: title,
+        item_id: itemId
+      }]);
+      if (error) console.error('recordActivity error:', error);
+    } catch (err) {
+      console.error('recordActivity exception:', err);
+    }
   }
 
   // --- Support ---

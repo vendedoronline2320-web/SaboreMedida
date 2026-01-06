@@ -71,8 +71,10 @@ const App: React.FC = () => {
   const handleToggleFavorite = async (id: string) => {
     if (!user) return;
     const type = videos.find(v => v.id === id) ? 'video' : 'recipe';
-    const newFavorites = await db.toggleFavorite(id, type);
-    setUser({ ...user, favorites: newFavorites });
+    await db.toggleFavorite(id, type);
+    // Fetch updated user to sync favorites AND activities (history)
+    const updatedUser = await db.getCurrentUser();
+    if (updatedUser) setUser(updatedUser);
   };
 
   const handleUpdateVideos = (updatedVideos: VideoLesson[]) => {
