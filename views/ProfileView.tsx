@@ -32,7 +32,6 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser }) => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    // If startWeight is undefined, set it to the current weight being saved
     const updates = { ...formData };
     if (!user.profile.startWeight && formData.weight) {
       updates.startWeight = formData.weight;
@@ -44,6 +43,25 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser }) => {
     alert('Perfil atualizado com sucesso!');
   };
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsSaving(true);
+      const publicUrl = await db.uploadFile(file, 'avatars');
+      await db.updateProfile({ avatar: publicUrl });
+      setUser(prev => prev ? ({ ...prev, profile: { ...prev.profile, avatar: publicUrl } }) : null);
+      setFormData(prev => ({ ...prev, avatar: publicUrl }));
+      alert('Foto de perfil atualizada!');
+    } catch (err: any) {
+      console.error('Error uploading avatar:', err);
+      alert('Erro ao fazer upload da imagem.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="animate-fade-in max-w-4xl mx-auto space-y-8">
       <div className="bg-white dark:bg-slate-800 rounded-[40px] shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden transition-colors">
@@ -51,14 +69,24 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser }) => {
         <div className="px-10 pb-10 -mt-12">
           <div className="flex flex-col md:flex-row items-end gap-6 mb-10">
             <div className="relative group">
+              <input
+                type="file"
+                id="avatar-upload-input"
+                className="hidden"
+                accept="image/*"
+                onChange={handleAvatarChange}
+              />
               {user.profile.avatar ? (
                 <img src={user.profile.avatar} className="w-32 h-32 rounded-[32px] border-4 border-white dark:border-slate-800 shadow-xl object-cover transition-colors" />
               ) : (
                 <div className="w-32 h-32 rounded-[32px] border-4 border-white dark:border-slate-800 bg-[#dce1e8] dark:bg-slate-700 shadow-xl transition-colors" />
               )}
-              <button className="absolute inset-0 bg-black/40 rounded-[32px] flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all">
+              <label
+                htmlFor="avatar-upload-input"
+                className="absolute inset-0 bg-black/40 rounded-[32px] flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+              >
                 <Camera size={24} />
-              </button>
+              </label>
             </div>
             <div className="flex-grow pb-2">
               <h3 className="text-3xl font-extrabold text-gray-900 dark:text-white">{user.profile.name}</h3>
@@ -121,7 +149,6 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser }) => {
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
-        {/* Meta de 2026 */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-gray-100 dark:border-slate-700 flex items-center gap-4 transition-colors">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
             <Target size={24} />
@@ -140,7 +167,6 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser }) => {
           </div>
         </div>
 
-        {/* Receitas Vistas */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-gray-100 dark:border-slate-700 flex items-center gap-4 transition-colors">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400">
             <Heart size={24} />
@@ -151,7 +177,6 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, setUser }) => {
           </div>
         </div>
 
-        {/* Evolução */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-gray-100 dark:border-slate-700 flex items-center gap-4 transition-colors">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
             <Scale size={24} />

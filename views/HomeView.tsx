@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { User, VideoLesson, Recipe } from '../types';
-import { Play, Utensils, Clock, TrendingUp, History, Sparkles, Flame, Trophy, Bell, ChevronRight } from 'lucide-react';
+import { Play, Utensils, Clock, TrendingUp, History, Sparkles, Flame, Trophy, Bell, ChevronRight, Heart, Lock, LogOut } from 'lucide-react';
 
 interface HomeViewProps {
   user: User;
@@ -18,11 +18,42 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
   const latestVideo = [...videos].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
   const videosCount = user.history.filter(h => h.type === 'video').length;
 
-  // Recommendations Logic: Randomly pick 4 items
+  // Recommendations Logic: Category-based
   const recommendations = React.useMemo(() => {
-    const combined = [...recipes.map(r => ({ ...r, type: 'recipe' })), ...videos.map(v => ({ ...v, type: 'video' }))];
-    return combined.sort(() => 0.5 - Math.random()).slice(0, 4);
-  }, [recipes, videos]);
+    // 1. Get user interest categories
+    const viewedCategories = user.history
+      .map(h => {
+        const item = [...videos, ...recipes].find(i => i.id === h.contentId);
+        return item?.category;
+      })
+      .filter(Boolean);
+
+    const favCategories = user.favorites
+      .map(fid => {
+        const item = [...videos, ...recipes].find(i => i.id === fid);
+        return item?.category;
+      })
+      .filter(Boolean);
+
+    const interests = [...viewedCategories, ...favCategories];
+    const topInterest = interests.sort((a, b) => interests.filter(v => v === b).length - interests.filter(v => v === a).length)[0];
+
+    // 2. Filter items
+    const combined = [
+      ...recipes.map(r => ({ ...r, type: 'recipe' as const })),
+      ...videos.map(v => ({ ...v, type: 'video' as const }))
+    ];
+
+    // Priority: items from top categories user hasn't seen much of
+    let filtered = combined.filter(item => item.category === topInterest);
+    if (filtered.length < 4) {
+      filtered = [...filtered, ...combined.filter(item => item.category !== topInterest)];
+    }
+
+    return filtered.slice(0, 4);
+  }, [recipes, videos, user.history, user.favorites]);
+
+  const hasAccessToRecs = user.profile.plan !== 'free_trial' || user.profile.isAdmin;
 
   const formatDate = (timestamp: number) => {
     const diff = Date.now() - timestamp;
@@ -106,7 +137,7 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
           </section>
 
           {/* Recommendations Grid */}
-          <section>
+          <section className="relative">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-black text-gray-900 dark:text-white">Recomendados para Você</h2>
               <button
@@ -116,7 +147,8 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
                 Ver tudo <ChevronRight size={16} />
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${!hasAccessToRecs ? 'blur-sm grayscale pointer-events-none opacity-40' : ''}`}>
               {recommendations.map((item: any, i) => (
                 <div
                   key={i}
@@ -136,6 +168,24 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
                 </div>
               ))}
             </div>
+
+            {!hasAccessToRecs && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+                <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-8 rounded-[40px] border border-gray-100 dark:border-slate-700 shadow-2xl text-center">
+                  <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                    <Lock size={32} />
+                  </div>
+                  <h4 className="text-lg font-black text-gray-900 dark:text-white mb-2">Recurso Premium</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 font-bold mb-6 max-w-[240px]">Atualize seu plano para receber recomendações inteligentes.</p>
+                  <button
+                    onClick={() => onNavigate('settings')}
+                    className="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-black text-sm hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 dark:shadow-none"
+                  >
+                    Ver Planos
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
         </div>
 
@@ -176,17 +226,28 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
               {user.history.length === 0 ? (
                 <p className="text-xs text-center text-gray-400 font-bold py-6">Nenhuma atividade registrada.</p>
               ) : (
-                user.history.slice(0, 4).map(h => (
-                  <div key={h.id} className="flex gap-4 items-center">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${h.type === 'video' ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500'}`}>
-                      {h.type === 'video' ? <Play size={16} fill="currentColor" /> : <Utensils size={16} />}
+                user.history.slice(0, 6).map(h => {
+                  let Icon = History;
+                  let color = 'bg-gray-50 text-gray-400';
+                  if (h.type === 'view_video' || h.type === 'video') { Icon = Play; color = 'bg-blue-50 text-blue-500'; }
+                  else if (h.type === 'view_recipe' || h.type === 'recipe') { Icon = Utensils; color = 'bg-orange-50 text-orange-500'; }
+                  else if (h.type === 'favorite') { Icon = Heart; color = 'bg-red-50 text-red-500'; }
+                  else if (h.type === 'login') { Icon = LogOut; color = 'bg-emerald-50 text-emerald-500'; }
+                  else if (h.type === 'upload_video') { Icon = TrendingUp; color = 'bg-purple-50 text-purple-500'; }
+                  else if (h.type === 'welcome') { Icon = Sparkles; color = 'bg-yellow-50 text-yellow-500'; }
+
+                  return (
+                    <div key={h.id} className="flex gap-4 items-start">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
+                        <Icon size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-gray-900 dark:text-white line-clamp-2">{h.title}</p>
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">{formatDate(h.timestamp)}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{h.title}</p>
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{formatDate(h.timestamp)}</p>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
             <button

@@ -97,9 +97,27 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
     if (selectedChatUser) {
       fetchMessages();
       interval = setInterval(fetchMessages, 3000);
+      return () => clearInterval(interval);
     }
-    return () => clearInterval(interval);
   }, [selectedChatUser]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: 'video' | 'thumb' | 'recipe') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsLoading(true);
+      const url = await db.uploadFile(file, 'media');
+      if (target === 'video') setVideoForm(prev => ({ ...prev, videoUrl: url }));
+      else if (target === 'thumb') setVideoForm(prev => ({ ...prev, thumbnail: url }));
+      else if (target === 'recipe') setRecipeForm(prev => ({ ...prev, image: url }));
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      alert('Erro no upload.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handlers
   const handleAdminSendMessage = async () => {
@@ -407,28 +425,40 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Link do Vídeo *</label>
-                        <div className="relative">
-                          <LinkIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                          <input
-                            type="text"
-                            value={videoForm.videoUrl}
-                            onChange={e => setVideoForm({ ...videoForm, videoUrl: e.target.value })}
-                            className="w-full pl-14 pr-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none font-bold transition-all"
-                            placeholder="YouTube, Vimeo ou Google Drive"
-                          />
+                        <div className="flex gap-2">
+                          <div className="relative flex-grow">
+                            <LinkIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                            <input
+                              type="text"
+                              value={videoForm.videoUrl}
+                              onChange={e => setVideoForm({ ...videoForm, videoUrl: e.target.value })}
+                              className="w-full pl-14 pr-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none font-bold transition-all"
+                              placeholder="YouTube ou Drive"
+                            />
+                          </div>
+                          <label className="cursor-pointer bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 px-4 rounded-2xl flex items-center justify-center hover:bg-gray-50 transition-all text-gray-400 hover:text-emerald-500">
+                            <input type="file" className="hidden" accept="video/*" onChange={e => handleFileUpload(e, 'video')} />
+                            <Plus size={24} />
+                          </label>
                         </div>
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Thumbnail (opcional)</label>
-                        <div className="relative">
-                          <ImageIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                          <input
-                            type="text"
-                            value={videoForm.thumbnail}
-                            onChange={e => setVideoForm({ ...videoForm, thumbnail: e.target.value })}
-                            className="w-full pl-14 pr-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none font-bold transition-all"
-                            placeholder="URL da imagem de capa"
-                          />
+                        <div className="flex gap-2">
+                          <div className="relative flex-grow">
+                            <ImageIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                            <input
+                              type="text"
+                              value={videoForm.thumbnail}
+                              onChange={e => setVideoForm({ ...videoForm, thumbnail: e.target.value })}
+                              className="w-full pl-14 pr-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none font-bold transition-all"
+                              placeholder="URL da imagem"
+                            />
+                          </div>
+                          <label className="cursor-pointer bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 px-4 rounded-2xl flex items-center justify-center hover:bg-gray-50 transition-all text-gray-400 hover:text-emerald-500">
+                            <input type="file" className="hidden" accept="image/*" onChange={e => handleFileUpload(e, 'thumb')} />
+                            <Plus size={24} />
+                          </label>
                         </div>
                       </div>
                       <div>
@@ -518,15 +548,21 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Imagem (URL)</label>
-                        <div className="relative">
-                          <ImageIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                          <input
-                            type="text"
-                            value={recipeForm.image}
-                            onChange={e => setRecipeForm({ ...recipeForm, image: e.target.value })}
-                            className="w-full pl-14 pr-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none font-bold transition-all"
-                            placeholder="URL da imagem do prato"
-                          />
+                        <div className="flex gap-2">
+                          <div className="relative flex-grow">
+                            <ImageIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                            <input
+                              type="text"
+                              value={recipeForm.image}
+                              onChange={e => setRecipeForm({ ...recipeForm, image: e.target.value })}
+                              className="w-full pl-14 pr-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none font-bold transition-all"
+                              placeholder="URL da imagem do prato"
+                            />
+                          </div>
+                          <label className="cursor-pointer bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 px-4 rounded-2xl flex items-center justify-center hover:bg-gray-50 transition-all text-gray-400 hover:text-emerald-500">
+                            <input type="file" className="hidden" accept="image/*" onChange={e => handleFileUpload(e, 'recipe')} />
+                            <Plus size={24} />
+                          </label>
                         </div>
                       </div>
                       <div>
