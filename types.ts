@@ -24,10 +24,14 @@ export interface VideoLesson {
 
 export interface Notification {
   id: string;
+  type: 'message' | 'system' | 'video' | 'welcome';
   title: string;
   message: string;
   time: number;
   read: boolean;
+  senderId?: string;
+  recipientId: string;
+  link?: string;
 }
 
 export interface Activity {
@@ -74,6 +78,7 @@ export interface ChatMessage {
   text: string;
   timestamp: number;
   isAdmin: boolean;
+  isRead: boolean;
 }
 
 export interface ChatSession {

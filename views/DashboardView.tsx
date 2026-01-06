@@ -33,18 +33,20 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   const [adminMessageCount, setAdminMessageCount] = useState(0);
   const [showFloatingChat, setShowFloatingChat] = useState(false);
 
-  // Poll for admin messages count
+  // Poll for admin messages count and user data
   React.useEffect(() => {
-    if (user.profile.isAdmin) {
-      const updateCount = async () => {
+    const updateCount = async () => {
+      if (user.profile.isAdmin) {
         const count = await db.getDailyMessageCount();
         setAdminMessageCount(count);
-      };
-      updateCount(); // Initial check
-      const interval = setInterval(updateCount, 10000); // 10s is enough for Supabase
-      return () => clearInterval(interval);
-    }
-  }, [user.profile.isAdmin]);
+      }
+      const updatedUser = await db.getCurrentUser();
+      if (updatedUser) setUser(updatedUser);
+    };
+    updateCount();
+    const interval = setInterval(updateCount, 15000);
+    return () => clearInterval(interval);
+  }, [user.profile.isAdmin, setUser]);
 
   const menuItems = [
     { id: 'home', icon: LayoutDashboard, label: 'Início', feature: 'any' },
@@ -70,11 +72,31 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
   const unreadCount = user.notifications.filter(n => !n.read).length;
 
-  const handleReadNotification = async (id: string) => {
-    const newNotifications = await db.markNotificationAsRead(id);
-    if (newNotifications) {
-      setUser({ ...user, notifications: newNotifications });
+  const handleReadNotification = async (notification: Notification) => {
+    // Navigate based on type/payload
+    if (notification.link) {
+      if (notification.link === '/chat') {
+        setShowFloatingChat(true);
+      } else if (notification.link === '/admin/support') {
+        setActiveSection('admin');
+      } else if (notification.link.includes('videos?id=')) {
+        const id = notification.link.split('=')[1];
+        const v = videos.find(vid => vid.id === id);
+        if (v) handleOpenVideo(v);
+      } else if (notification.link.includes('recipes?id=')) {
+        const id = notification.link.split('=')[1];
+        const r = recipes.find(rec => rec.id === id);
+        if (r) handleOpenRecipe(r);
+      }
     }
+
+    if (!notification.read) {
+      const newNotifications = await db.markNotificationAsRead(notification.id);
+      if (newNotifications) {
+        setUser({ ...user, notifications: newNotifications });
+      }
+    }
+    setShowNotifications(false);
   };
 
   const toggleDarkMode = async () => {
@@ -134,6 +156,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           onOpenVideo={handleOpenVideo}
           onOpenRecipe={handleOpenRecipe}
           onNavigate={handleNavigate}
+          onNotificationClick={handleReadNotification}
         />;
       case 'recipes':
         return <RecipesView
@@ -274,7 +297,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 user.notifications.map(n => (
                   <div
                     key={n.id}
-                    onClick={() => handleReadNotification(n.id)}
+                    onClick={() => handleReadNotification(n)}
                     className={`p-6 rounded-[28px] border transition-all cursor-pointer ${n.read
                       ? 'bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700'
                       : 'bg-emerald-50 dark:bg-slate-700/50 border-emerald-100 dark:border-emerald-900/30 shadow-sm'
@@ -331,11 +354,13 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
             <button
               onClick={() => setShowNotifications(true)}
-              className="relative text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all"
+              className="relative text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl"
             >
               <Bell size={24} className="dark:text-slate-400" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                <span className="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 animate-bounce-slow">
+                  {unreadCount}
+                </span>
               )}
             </button>
           </div>

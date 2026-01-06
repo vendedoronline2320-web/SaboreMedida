@@ -86,6 +86,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
       if (selectedChatUser) {
         const msgs = await db.getChatMessages(selectedChatUser);
         setChatMessages(msgs);
+
+        // Mark as read if any unread messages from user
+        const hasUnread = msgs.some(m => !m.isAdmin && !m.isRead);
+        if (hasUnread) {
+          await db.markChatAsRead(selectedChatUser, true);
+        }
       }
     };
     if (selectedChatUser) {
@@ -296,14 +302,21 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
                   onClick={() => setSelectedChatUser(session.userId)}
                   className={`p-4 rounded-2xl cursor-pointer transition-all border border-transparent ${selectedChatUser === session.userId ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/30' : 'hover:bg-gray-50 dark:hover:bg-slate-700'}`}
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 relative">
                     <img src={session.userAvatar} className="w-12 h-12 rounded-full border border-gray-100 dark:border-slate-600" alt="Avatar" />
                     <div className="min-w-0">
                       <h5 className="font-bold text-gray-900 dark:text-white truncate">{session.userName}</h5>
                       <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px]">{session.lastMessage.text}</p>
                     </div>
-                    <div className="ml-auto text-[10px] font-bold text-gray-300 dark:text-gray-600">
-                      {new Date(session.lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <div className="ml-auto flex flex-col items-end gap-2">
+                      <div className="text-[10px] font-bold text-gray-300 dark:text-gray-600">
+                        {new Date(session.lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                      {(session.unreadCount || 0) > 0 && (
+                        <span className="w-5 h-5 bg-emerald-500 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-pulse">
+                          {session.unreadCount}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -59,6 +59,13 @@ class DatabaseService {
         .select('item_id')
         .eq('user_id', session.user.id);
 
+      // Fetch notifications
+      const { data: notifications } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false });
+
       return {
         id: session.user.id,
         profile: {
@@ -70,14 +77,24 @@ class DatabaseService {
           avatar: profile.avatar_url || '',
           goal: profile.goal || 'saude',
           weight: profile.weight?.toString() || '',
-          lastLogin: new Date(profile.last_login || Date.now()).getTime(),
+          lastLogin: profile.last_login ? new Date(profile.last_login).getTime() : Date.now(),
           darkMode: !!profile.dark_mode,
           streak: profile.streak || 0,
-          lastStreakUpdate: new Date(profile.last_streak_update || 0).getTime()
+          lastStreakUpdate: profile.last_streak_update ? new Date(profile.last_streak_update).getTime() : 0
         },
         favorites: (favs || []).map(f => f.item_id),
         history: [],
-        notifications: []
+        notifications: (notifications || []).map(n => ({
+          id: n.id,
+          type: n.type as any,
+          title: n.title,
+          message: n.content,
+          time: new Date(n.created_at).getTime(),
+          read: n.is_read,
+          senderId: n.sender_id,
+          recipientId: n.user_id,
+          link: n.payload?.link
+        }))
       };
     } catch (err: any) {
       console.error('DatabaseService.getCurrentUser catch-all:', err);
@@ -284,7 +301,8 @@ class DatabaseService {
       senderId: m.sender_id,
       text: m.text,
       timestamp: new Date(m.created_at).getTime(),
-      isAdmin: m.is_admin
+      isAdmin: m.is_admin,
+      isRead: m.is_read
     }));
   }
 
@@ -296,8 +314,51 @@ class DatabaseService {
       user_id: userId,
       sender_id: senderId,
       text,
-      is_admin: isAdmin
+      is_admin: isAdmin,
+      is_read: false
     }]);
+
+    // Create Notification
+    const recipientId = isAdmin ? userId : (await this.getAdminId());
+    if (recipientId) {
+      await supabase.from('notifications').insert([{
+        user_id: recipientId,
+        type: 'message',
+        title: isAdmin ? 'Nova Mensagem do Suporte' : 'Novo Contato de Usuário',
+        content: text,
+        sender_id: senderId,
+        payload: { link: isAdmin ? '/chat' : '/admin/support' }
+      }]);
+    }
+  }
+
+  private async getAdminId() {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', 'admin@saboremedida.com')
+      .maybeSingle();
+    return data?.id;
+  }
+
+  async markChatAsRead(userId: string, currentIsAdmin: boolean) {
+    // If admin is reading, mark messages from user as read
+    // If user is reading, mark messages from admin as read
+    await supabase.from('chat_messages')
+      .update({ is_read: true })
+      .eq('user_id', userId)
+      .eq('is_admin', !currentIsAdmin)
+      .eq('is_read', false);
+
+    // Also mark notifications of type 'message' as read for the current user
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      await supabase.from('notifications')
+        .update({ is_read: true })
+        .eq('user_id', session.user.id)
+        .eq('type', 'message')
+        .eq('is_read', false);
+    }
   }
 
   async getAllChatSessions(): Promise<ChatSession[]> {
@@ -319,10 +380,14 @@ class DatabaseService {
             senderId: m.sender_id,
             text: m.text,
             timestamp: new Date(m.created_at).getTime(),
-            isAdmin: m.is_admin
+            isAdmin: m.is_admin,
+            isRead: m.is_read
           },
           unreadCount: 0
         };
+      }
+      if (!m.is_admin && !m.is_read) {
+        sessions[m.user_id].unreadCount!++;
       }
     });
 
@@ -337,7 +402,14 @@ class DatabaseService {
   }
 
   async markNotificationAsRead(id: string) {
-    return [];
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return null;
+
+    await supabase.from('notifications')
+      .update({ is_read: true })
+      .eq('id', id);
+
+    return (await this.getCurrentUser())?.notifications || [];
   }
 
   private async checkDailyStreak(user: User) {
@@ -379,12 +451,11 @@ class DatabaseService {
   }
 
   async getDailyMessageCount(): Promise<number> {
-    const today = new Date().toISOString().split('T')[0];
     const { count } = await supabase
       .from('chat_messages')
       .select('*', { count: 'exact', head: true })
-      .gte('created_at', `${today}T00:00:00Z`)
-      .eq('is_admin', false);
+      .eq('is_admin', false)
+      .eq('is_read', false);
 
     return count || 0;
   }

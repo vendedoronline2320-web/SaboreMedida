@@ -23,6 +23,12 @@ const HelpChat: React.FC<HelpChatProps> = ({ user, onClose, isFloating = false, 
         const fetchChat = async () => {
             const msgs = await db.getChatMessages(user.id);
             setChatMessages(msgs);
+
+            // Mark as read if any unread messages from admin
+            const hasUnread = msgs.some(m => m.isAdmin && !m.isRead);
+            if (hasUnread) {
+                await db.markChatAsRead(user.id, false);
+            }
         };
         fetchChat();
         interval = setInterval(fetchChat, 3000);
@@ -45,7 +51,8 @@ const HelpChat: React.FC<HelpChatProps> = ({ user, onClose, isFloating = false, 
             senderId: user.id,
             text,
             timestamp: Date.now(),
-            isAdmin: false
+            isAdmin: false,
+            isRead: false
         };
         setChatMessages(prev => [...prev, tempMsg]);
         await db.sendMessage(user.id, text, false);

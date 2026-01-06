@@ -10,9 +10,10 @@ interface HomeViewProps {
   onOpenVideo: (video: VideoLesson) => void;
   onOpenRecipe: (recipe: Recipe) => void;
   onNavigate: (section: string) => void;
+  onNotificationClick: (notification: Notification) => void;
 }
 
-const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo, onOpenRecipe, onNavigate }) => {
+const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo, onOpenRecipe, onNavigate, onNotificationClick }) => {
   // Sorting latest content
   const latestVideo = [...videos].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
   const videosCount = user.history.filter(h => h.type === 'video').length;
@@ -150,9 +151,16 @@ const HomeView: React.FC<HomeViewProps> = ({ user, videos, recipes, onOpenVideo,
                 <div className="text-center py-6 text-gray-400 text-xs font-bold">Sem novas notificações</div>
               ) : (
                 user.notifications.slice(0, 3).map(n => (
-                  <div key={n.id} className="p-4 bg-gray-50 dark:bg-slate-700/50 rounded-2xl border border-transparent hover:border-emerald-100 transition-all cursor-pointer">
-                    <h5 className="font-bold text-xs text-gray-900 dark:text-white mb-1">{n.title}</h5>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-1">{n.text}</p>
+                  <div
+                    key={n.id}
+                    onClick={() => onNotificationClick(n)}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${n.read ? 'bg-gray-50 dark:bg-slate-700/50 border-transparent' : 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30 shadow-sm font-bold'}`}
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <h5 className="text-xs text-gray-900 dark:text-white line-clamp-1">{n.title}</h5>
+                      {!n.read && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-1"></div>}
+                    </div>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-1">{n.message}</p>
                   </div>
                 ))
               )}
