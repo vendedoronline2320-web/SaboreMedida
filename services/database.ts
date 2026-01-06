@@ -28,13 +28,21 @@ class DatabaseService {
             id: session.user.id,
             email: session.user.email,
             name: session.user.user_metadata?.name || 'Usuário',
-            is_admin: session.user.email === 'admin@saboremedida.com' || session.user.email === 'vendedoronline2520@gmail.com'
+            is_admin: session.user.email === 'admin@saboremedida.com' || session.user.email === 'vendedoronline2520@gmail.com',
+            trial_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
           }])
           .select()
           .maybeSingle();
 
         if (createError) throw new Error(`[DB] Erro ao criar perfil: ${createError.message}`);
         profile = newProfile;
+      }
+
+      // If user is free trial but has no expiration yet, set it to 24h from now
+      if (profile && profile.plan === 'free_trial' && !profile.trial_expires_at) {
+        const expiration = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        await supabase.from('profiles').update({ trial_expires_at: expiration }).eq('id', session.user.id);
+        profile.trial_expires_at = expiration;
       }
 
       if (!profile) throw new Error('[DB] Perfil não encontrado.');
@@ -185,7 +193,9 @@ class DatabaseService {
     return (data || []).map(v => ({
       id: v.id, title: v.title, thumbnail: this.getDirectLink(v.thumbnail),
       duration: v.duration, description: v.description, shortDescription: v.short_description,
-      category: v.category, videoUrl: this.getDirectLink(v.video_url), createdAt: new Date(v.created_at).getTime()
+      category: v.category, videoUrl: this.getDirectLink(v.video_url),
+      createdAt: new Date(v.created_at).getTime(),
+      isPremium: !!v.is_premium
     }));
   }
 
@@ -194,7 +204,8 @@ class DatabaseService {
       title: video.title, thumbnail: this.getDirectLink(video.thumbnail),
       duration: video.duration, description: video.description,
       short_description: video.shortDescription, category: video.category,
-      video_url: this.getDirectLink(video.videoUrl)
+      video_url: this.getDirectLink(video.videoUrl),
+      is_premium: !!video.isPremium
     };
 
     let result;
@@ -405,14 +416,33 @@ class DatabaseService {
     return count || 0;
   }
 
-  async checkPlanAccess(feature: string, user: User): Promise<{ hasAccess: boolean; reason?: 'expired' | 'limit_reached' | 'plan_required' }> {
+  async checkPlanAccess(feature: string, user: User, content?: VideoLesson | Recipe): Promise<{ hasAccess: boolean; reason?: 'expired' | 'limit_reached' | 'plan_required' }> {
     if (user.profile.isAdmin) return { hasAccess: true };
-    if (user.profile.plan === 'free_trial') return { hasAccess: (user.profile.trialExpiresAt || 0) > Date.now(), reason: 'expired' };
-    if (user.profile.plan === 'premium') return { hasAccess: true };
-    if (user.profile.plan === 'essential') {
-      if (feature === 'limited_videos') return (await this.getVideoViewsCount(user.id)) < 5 ? { hasAccess: true } : { hasAccess: false, reason: 'limit_reached' };
-      return { hasAccess: ['recipes', 'basic_support', 'limited_videos'].includes(feature), reason: 'plan_required' };
+
+    // Free Trial: Check if expired
+    if (user.profile.plan === 'free_trial') {
+      const isTrialExpired = user.profile.trialExpiresAt && Date.now() > user.profile.trialExpiresAt;
+      if (isTrialExpired) return { hasAccess: false, reason: 'expired' };
+      return { hasAccess: true }; // Free trial has access to everything
     }
+
+    if (user.profile.plan === 'premium') return { hasAccess: true };
+
+    // Essential (Plano 10)
+    if (user.profile.plan === 'essential') {
+      // Essential has access only to common videos and support
+      if (feature === 'videos' || feature === 'video') {
+        if (content && (content as VideoLesson).isPremium) {
+          return { hasAccess: false, reason: 'plan_required' };
+        }
+        return { hasAccess: true };
+      }
+      if (feature === 'basic_support' || feature === 'any') return { hasAccess: true };
+
+      // No access to recipes or favorites
+      return { hasAccess: false, reason: 'plan_required' };
+    }
+
     return { hasAccess: false, reason: 'plan_required' };
   }
 

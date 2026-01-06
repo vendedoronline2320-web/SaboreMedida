@@ -2,15 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { db } from '../services/database';
-import { Bell, Shield, Moon, Sun, LogOut, ChevronRight, HelpCircle, CreditCard, RotateCcw, Lock, X, User as UserIcon, XCircle, Trophy } from 'lucide-react';
+import { Bell, Shield, Moon, Sun, LogOut, ChevronRight, HelpCircle, CreditCard, RotateCcw, Lock, X, User as UserIcon, XCircle, Trophy, Rocket, Sparkles } from 'lucide-react';
 import HelpChat from './HelpChat';
 
 interface SettingsViewProps {
   user: User;
   onLogout: () => void;
+  onNavigate?: (section: string) => void;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
-const SettingsView: React.FC<SettingsViewProps> = ({ user, onLogout }) => {
+const SettingsView: React.FC<SettingsViewProps> = ({ user, onLogout, onNavigate, setUser }) => {
   const [requestingRefund, setRequestingRefund] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(user.profile.notificationsEnabled ?? true);
 
@@ -59,6 +61,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onLogout }) => {
       alert("Erro ao alterar senha.");
     }
   };
+
+  const isPremium = user.profile.plan === 'premium' || user.profile.isAdmin;
 
   return (
     <div className="animate-fade-in max-w-4xl mx-auto space-y-6 md:space-y-12 pb-24 md:pb-20 px-4 md:px-0">
@@ -112,7 +116,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onLogout }) => {
           <div className="bg-white dark:bg-slate-700 p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-600 mb-6 md:mb-10 shadow-sm relative overflow-hidden group transition-colors">
             <div className="absolute top-0 right-0 p-4 md:p-8">
               <div className="w-12 h-12 md:w-16 md:h-16 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500 dark:text-emerald-400 rounded-2xl md:rounded-3xl flex items-center justify-center group-hover:rotate-12 transition-all">
-                <Trophy size={24} className="fill-current md:size-28" />
+                {isPremium ? <Trophy size={24} className="fill-current" /> : <Rocket size={24} className="animate-bounce-slow" />}
               </div>
             </div>
             <div className="relative z-10">
@@ -124,42 +128,51 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onLogout }) => {
                 Status: {user.profile.plan === 'premium' ? 'Vitalício • Ativado em 2026' : user.profile.plan === 'essential' ? 'Mensal Ativo' : `Expira em: ${user.profile.trialExpiresAt ? new Date(user.profile.trialExpiresAt).toLocaleDateString() : '24h'}`}
               </p>
 
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={handleRefund}
-                  disabled={requestingRefund}
-                  className="flex items-center gap-3 text-[11px] md:text-sm font-black text-red-500 hover:text-red-700 transition-all py-1"
-                >
-                  <RotateCcw size={16} /> {requestingRefund ? 'Processando...' : 'Solicitar Reembolso (Garantia)'}
-                </button>
+              <div className="flex flex-col gap-4">
+                {!isPremium ? (
+                  <a
+                    href="https://pay.cakto.com.br/yo5n39h_711365"
+                    className="flex items-center justify-center gap-3 bg-emerald-500 text-white font-black py-4 px-8 rounded-2xl shadow-xl shadow-emerald-200 dark:shadow-none hover:bg-emerald-600 hover:scale-[1.02] transition-all"
+                  >
+                    <Sparkles size={18} /> Fazer Upgrade para Premium
+                  </a>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={handleRefund}
+                      disabled={requestingRefund}
+                      className="flex items-center gap-3 text-[11px] md:text-sm font-black text-red-500 hover:text-red-700 transition-all py-1"
+                    >
+                      <RotateCcw size={16} /> {requestingRefund ? 'Processando...' : 'Solicitar Reembolso (Garantia)'}
+                    </button>
 
-                <button
-                  onClick={() => {
-                    if (confirm('Tem certeza que deseja cancelar seu plano?')) {
-                      alert('Sua solicitação foi enviada.');
-                    }
-                  }}
-                  className="flex items-center gap-3 text-[11px] md:text-sm font-black text-gray-400 hover:text-red-600 transition-all py-1"
-                >
-                  <XCircle size={16} /> Cancelar Assinatura
-                </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Tem certeza que deseja cancelar seu plano?')) {
+                          alert('Sua solicitação foi enviada.');
+                        }
+                      }}
+                      className="flex items-center gap-3 text-[11px] md:text-sm font-black text-gray-400 hover:text-red-600 transition-all py-1"
+                    >
+                      <XCircle size={16} /> Cancelar Assinatura
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-            {user.profile.plan !== 'premium' && (
-              <button
-                onClick={() => setShowHelpChat(true)}
-                className="flex items-center justify-between p-5 md:p-8 rounded-[28px] md:rounded-[32px] bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 hover:border-emerald-200 hover:shadow-xl transition-all text-left group"
-              >
-                <div className="flex items-center gap-4">
-                  <HelpCircle className="text-gray-300 dark:text-slate-400 group-hover:text-emerald-500 transition-all" />
-                  <span className="font-black text-sm md:text-base text-gray-700 dark:text-white">Central de Ajuda</span>
-                </div>
-                <ChevronRight className="text-gray-200 dark:text-slate-500 group-hover:text-emerald-500" size={18} />
-              </button>
-            )}
+            <button
+              onClick={() => setShowHelpChat(true)}
+              className="flex items-center justify-between p-5 md:p-8 rounded-[28px] md:rounded-[32px] bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 hover:border-emerald-200 hover:shadow-xl transition-all text-left group"
+            >
+              <div className="flex items-center gap-4">
+                <HelpCircle className="text-gray-300 dark:text-slate-400 group-hover:text-emerald-500 transition-all" />
+                <span className="font-black text-sm md:text-base text-gray-700 dark:text-white">Central de Ajuda</span>
+              </div>
+              <ChevronRight className="text-gray-200 dark:text-slate-500 group-hover:text-emerald-500" size={18} />
+            </button>
 
             <button
               onClick={onLogout}
@@ -191,7 +204,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user, onLogout }) => {
                 <h3 className="text-lg md:text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
                   <Lock className="text-emerald-500" /> Alterar Senha
                 </h3>
-                <button onClick={() => setShowPasswordModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white">
+                <button onClick={() => setShowPasswordModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:white">
                   <X size={24} />
                 </button>
               </div>

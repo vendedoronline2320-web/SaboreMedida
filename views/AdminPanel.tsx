@@ -35,7 +35,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
     category: 'Café da Manhã',
     shortDescription: '',
     description: '',
-    duration: '00:00'
+    duration: '00:00',
+    isPremium: false
   });
 
   // Recipe Form State
@@ -147,7 +148,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
       category: 'Café da Manhã',
       shortDescription: '',
       description: '',
-      duration: '00:00'
+      duration: '00:00',
+      isPremium: false
     });
     setIsAdding(true);
   };
@@ -176,7 +178,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
         shortDescription: videoForm.shortDescription || '',
         description: videoForm.description || '',
         duration: videoForm.duration || '00:00',
-        createdAt: editingVideo?.createdAt || Date.now()
+        createdAt: editingVideo?.createdAt || Date.now(),
+        isPremium: !!videoForm.isPremium
       };
 
       await db.saveVideo(videoToSave);
@@ -489,6 +492,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
                             />
                           </div>
                         </div>
+                        <div className="flex items-center gap-3 pt-8">
+                          <input
+                            type="checkbox"
+                            id="isPremiumCheck"
+                            checked={videoForm.isPremium}
+                            onChange={e => setVideoForm({ ...videoForm, isPremium: e.target.checked })}
+                            className="w-5 h-5 accent-emerald-500"
+                          />
+                          <label htmlFor="isPremiumCheck" className="text-sm font-bold text-gray-700 dark:text-gray-300">Conteúdo Premium</label>
+                        </div>
                       </div>
                       <textarea
                         value={videoForm.shortDescription}
@@ -604,7 +617,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
                         </div>
                       </td>
                       <td className="px-10 py-6 hidden md:table-cell">
-                        <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">{video.duration}</span>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{video.category}</span>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${video.isPremium ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
+                            {video.isPremium ? 'Premium' : 'Comum'}
+                          </span>
+                        </div>
+                        <span className="text-xs font-black text-gray-600 dark:text-gray-400">{video.duration}</span>
                       </td>
                       <td className="px-10 py-6 text-right">
                         <div className="flex justify-end gap-3">

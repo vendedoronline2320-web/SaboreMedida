@@ -20,6 +20,7 @@ export interface VideoLesson {
   category?: string; // Nova
   videoUrl: string;
   createdAt: number;
+  isPremium?: boolean;
 }
 
 export interface Notification {
