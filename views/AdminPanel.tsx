@@ -35,7 +35,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
     category: 'Café da Manhã',
     shortDescription: '',
     description: '',
-    duration: '10:00'
+    duration: '00:00'
   });
 
   // Recipe Form State
@@ -66,20 +66,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
     return () => clearInterval(interval);
   }, [activeTab]);
 
-  // Auto-detect duration for direct video links
-  useEffect(() => {
-    if (videoForm.videoUrl && videoForm.videoUrl.match(/\.(mp4|webm|ogg|mov)$|^https:\/\/.+google.+/i)) {
-      const video = document.createElement('video');
-      video.preload = 'metadata';
-      video.src = videoForm.videoUrl;
-      video.onloadedmetadata = () => {
-        const mins = Math.floor(video.duration / 60);
-        const secs = Math.floor(video.duration % 60);
-        setVideoForm(prev => ({ ...prev, duration: `${mins}:${secs < 10 ? '0' : ''}${secs}` }));
-      };
-    }
-  }, [videoForm.videoUrl]);
-
   useEffect(() => {
     let interval: NodeJS.Timeout;
     const fetchMessages = async () => {
@@ -87,7 +73,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
         const msgs = await db.getChatMessages(selectedChatUser);
         setChatMessages(msgs);
 
-        // Mark as read if any unread messages from user
         const hasUnread = msgs.some(m => !m.isAdmin && !m.isRead);
         if (hasUnread) {
           await db.markChatAsRead(selectedChatUser, true);
@@ -101,25 +86,49 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
     }
   }, [selectedChatUser]);
 
+  // Auto-duration for external links or uploaded videos
+  useEffect(() => {
+    const detectDuration = async () => {
+      if (videoForm.videoUrl && (videoForm.videoUrl.match(/\.(mp4|webm|ogg|mov)$|^https:\/\/.+google.+/i) || videoForm.videoUrl.includes('supabase.co'))) {
+        const directUrl = db.getDirectLink(videoForm.videoUrl);
+        const videoElement = document.createElement('video');
+        videoElement.preload = 'metadata';
+        videoElement.src = directUrl;
+        videoElement.onloadedmetadata = () => {
+          const mins = Math.floor(videoElement.duration / 60);
+          const secs = Math.floor(videoElement.duration % 60);
+          if (mins < 999) { // Sanity check
+            setVideoForm(prev => ({ ...prev, duration: `${mins}:${secs < 10 ? '0' : ''}${secs}` }));
+          }
+        };
+      } else if (videoForm.videoUrl?.includes('youtube.com') || videoForm.videoUrl?.includes('youtu.be')) {
+        // Placeholder for YT duration if we don't have API key, but keep it editable
+      }
+    };
+    detectDuration();
+  }, [videoForm.videoUrl]);
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: 'video' | 'thumb' | 'recipe') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
       setIsLoading(true);
-      const url = await db.uploadFile(file, 'media');
+      const bucket = target === 'video' ? 'videos' : 'images';
+      const url = await db.uploadFile(file, bucket);
+
       if (target === 'video') setVideoForm(prev => ({ ...prev, videoUrl: url }));
       else if (target === 'thumb') setVideoForm(prev => ({ ...prev, thumbnail: url }));
       else if (target === 'recipe') setRecipeForm(prev => ({ ...prev, image: url }));
+
     } catch (err: any) {
       console.error('Upload error:', err);
-      alert('Erro no upload.');
+      alert('Erro no upload: ' + err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handlers
   const handleAdminSendMessage = async () => {
     if (!selectedChatUser || !adminReply.trim()) return;
     const text = adminReply;
@@ -138,7 +147,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
       category: 'Café da Manhã',
       shortDescription: '',
       description: '',
-      duration: '10:00'
+      duration: '00:00'
     });
     setIsAdding(true);
   };
@@ -166,7 +175,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
         category: videoForm.category || 'Geral',
         shortDescription: videoForm.shortDescription || '',
         description: videoForm.description || '',
-        duration: videoForm.duration || '10:00',
+        duration: videoForm.duration || '00:00',
         createdAt: editingVideo?.createdAt || Date.now()
       };
 
@@ -243,7 +252,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
       alert(editingRecipe ? 'Receita atualizada com sucesso!' : 'Receita adicionada com sucesso!');
     } catch (err) {
       console.error(err);
-      alert('Erro ao salvar a receita.');
+      alert('Erro ao salvar o receita.');
       setIsLoading(false);
     }
   };
@@ -303,11 +312,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
             <div className="p-6 border-b border-gray-50 dark:border-slate-700">
               <h4 className="font-black text-gray-900 dark:text-white text-lg flex items-center gap-2">
                 <MessageCircle size={20} className="text-emerald-500" /> Conversas Ativas
-                {dailyMessageCount > 0 && (
-                  <span className="ml-2 bg-red-500 text-white text-[10px] h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-full shadow-sm">
-                    {dailyMessageCount}
-                  </span>
-                )}
               </h4>
             </div>
             <div className="flex-grow overflow-y-auto p-4 space-y-2">
@@ -326,10 +330,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
                       <h5 className="font-bold text-gray-900 dark:text-white truncate">{session.userName}</h5>
                       <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px]">{session.lastMessage.text}</p>
                     </div>
-                    <div className="ml-auto flex flex-col items-end gap-2">
-                      <div className="text-[10px] font-bold text-gray-300 dark:text-gray-600">
-                        {new Date(session.lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </div>
+                    <div className="ml-auto flex flex-col items-end gap-2 text-[10px] font-bold text-gray-300 dark:text-gray-600">
+                      {new Date(session.lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       {(session.unreadCount || 0) > 0 && (
                         <span className="w-5 h-5 bg-emerald-500 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-pulse">
                           {session.unreadCount}
@@ -393,7 +395,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
           </div>
         </div>
       ) : (
-        /* Existing Content for Videos/Recipes */
         isAdding && (
           <div className="fixed inset-0 z-[150] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
             <div className="bg-white dark:bg-slate-800 w-full max-w-4xl max-h-[95vh] overflow-y-auto rounded-[40px] shadow-2xl p-8 md:p-12 animate-fade-in relative border border-gray-100 dark:border-slate-700">
@@ -405,7 +406,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
               </button>
 
               {activeTab === 'videos' ? (
-                // FORMULARIO DE VIDEO
                 <>
                   <div className="mb-10 text-center">
                     <h3 className="text-3xl font-black text-gray-900 dark:text-white">{editingVideo ? 'Editar Vídeo' : 'Adicionar Novo Vídeo'}</h3>
@@ -424,7 +424,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Link do Vídeo *</label>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Link do Vídeo (YouTube, Drive ou Direct) *</label>
                         <div className="flex gap-2">
                           <div className="relative flex-grow">
                             <LinkIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -433,17 +433,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
                               value={videoForm.videoUrl}
                               onChange={e => setVideoForm({ ...videoForm, videoUrl: e.target.value })}
                               className="w-full pl-14 pr-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none font-bold transition-all"
-                              placeholder="YouTube ou Drive"
+                              placeholder="Cole o link ou use o botão à direita"
                             />
                           </div>
-                          <label className="cursor-pointer bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 px-4 rounded-2xl flex items-center justify-center hover:bg-gray-50 transition-all text-gray-400 hover:text-emerald-500">
-                            <input type="file" className="hidden" accept="video/*" onChange={e => handleFileUpload(e, 'video')} />
-                            <Plus size={24} />
+                          <label className="cursor-pointer bg-emerald-600 text-white px-6 rounded-2xl flex items-center justify-center hover:bg-emerald-700 transition-all shadow-lg active:scale-95">
+                            {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Plus size={24} />}
+                            <input type="file" className="hidden" accept="video/*" onChange={e => handleFileUpload(e, 'video')} disabled={isLoading} />
                           </label>
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Thumbnail (opcional)</label>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Thumbnail (Link ou Upload) *</label>
                         <div className="flex gap-2">
                           <div className="relative flex-grow">
                             <ImageIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -452,83 +452,68 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
                               value={videoForm.thumbnail}
                               onChange={e => setVideoForm({ ...videoForm, thumbnail: e.target.value })}
                               className="w-full pl-14 pr-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none font-bold transition-all"
-                              placeholder="URL da imagem"
+                              placeholder="URL da imagem ou use o botão"
                             />
                           </div>
-                          <label className="cursor-pointer bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 px-4 rounded-2xl flex items-center justify-center hover:bg-gray-50 transition-all text-gray-400 hover:text-emerald-500">
-                            <input type="file" className="hidden" accept="image/*" onChange={e => handleFileUpload(e, 'thumb')} />
-                            <Plus size={24} />
+                          <label className="cursor-pointer bg-emerald-600 text-white px-6 rounded-2xl flex items-center justify-center hover:bg-emerald-700 transition-all shadow-lg active:scale-95">
+                            {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Plus size={24} />}
+                            <input type="file" className="hidden" accept="image/*" onChange={e => handleFileUpload(e, 'thumb')} disabled={isLoading} />
                           </label>
                         </div>
                       </div>
+                    </div>
+                    <div className="space-y-6">
                       <div>
                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Categoria</label>
-                        <div className="relative">
-                          <Tag className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                          <select
-                            value={videoForm.category}
-                            onChange={e => setVideoForm({ ...videoForm, category: e.target.value })}
-                            className="w-full pl-14 pr-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none font-bold transition-all appearance-none"
-                          >
-                            <option value="Café da Manhã">Café da Manhã</option>
-                            <option value="Almoço">Almoço</option>
-                            <option value="Jantar">Jantar</option>
-                            <option value="Lanches">Lanches</option>
-                            <option value="Doces">Doces</option>
-                          </select>
+                        <select
+                          value={videoForm.category}
+                          onChange={e => setVideoForm({ ...videoForm, category: e.target.value })}
+                          className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 text-gray-900 dark:text-white outline-none font-bold"
+                        >
+                          <option value="Café da Manhã">Café da Manhã</option>
+                          <option value="Almoço">Almoço</option>
+                          <option value="Jantar">Jantar</option>
+                          <option value="Lanches">Lanches</option>
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Duração (Min:Seg)</label>
+                          <div className="relative">
+                            <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <input
+                              type="text"
+                              value={videoForm.duration}
+                              onChange={e => setVideoForm({ ...videoForm, duration: e.target.value })}
+                              className="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:border-emerald-500 text-gray-900 dark:text-white outline-none font-bold"
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="space-y-6 flex flex-col h-full">
                       <textarea
                         value={videoForm.shortDescription}
                         onChange={e => setVideoForm({ ...videoForm, shortDescription: e.target.value })}
-                        className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none h-[80px] resize-none font-medium transition-all"
-                        placeholder="Uma breve descrição do vídeo"
+                        className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 h-24 text-gray-900 dark:text-white outline-none font-medium"
+                        placeholder="Breve descrição..."
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Duração (Min:Seg)</label>
-                      <div className="relative">
-                        <Clock className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                        <input
-                          type="text"
-                          value={videoForm.duration}
-                          onChange={e => setVideoForm({ ...videoForm, duration: e.target.value })}
-                          className="w-full pl-14 pr-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none font-bold transition-all"
-                          placeholder="Ex: 12:45"
-                        />
-                      </div>
-                      <div className="flex-grow">
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Conteúdo Completo</label>
-                        <textarea
-                          value={videoForm.description}
-                          onChange={e => setVideoForm({ ...videoForm, description: e.target.value })}
-                          className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none h-[220px] resize-none font-medium leading-relaxed"
-                          placeholder="Detalhes da aula..."
-                        />
-                      </div>
-                      <div className="flex gap-4 mt-auto">
-                        <button
-                          onClick={() => setIsAdding(false)}
-                          className="flex-1 py-5 rounded-2xl bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 font-black hover:bg-gray-200 dark:hover:bg-slate-600 transition-all"
-                        >
-                          Cancelar
-                        </button>
-                        <button
-                          onClick={handleSaveVideo}
-                          disabled={isLoading}
-                          className="flex-[2] py-5 rounded-2xl bg-emerald-600 text-white font-black shadow-2xl shadow-emerald-200 dark:shadow-emerald-900/20 hover:bg-emerald-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                        >
-                          {isLoading ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} />}
-                          {editingVideo ? 'Salvar' : 'Adicionar'}
-                        </button>
-                      </div>
+                    <div className="lg:col-span-2">
+                      <textarea
+                        value={videoForm.description}
+                        onChange={e => setVideoForm({ ...videoForm, description: e.target.value })}
+                        className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 h-40 text-gray-900 dark:text-white outline-none font-medium leading-relaxed"
+                        placeholder="Conteúdo completo da aula..."
+                      />
+                    </div>
+                    <div className="lg:col-span-2 flex gap-4">
+                      <button onClick={() => setIsAdding(false)} className="flex-1 py-5 rounded-2xl bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 font-black">Cancelar</button>
+                      <button onClick={handleSaveVideo} disabled={isLoading} className="flex-[2] py-5 rounded-2xl bg-emerald-600 text-white font-black shadow-xl shadow-emerald-200">
+                        {isLoading ? 'Aguarde...' : editingVideo ? 'Atualizar Vídeo' : 'Publicar Vídeo'}
+                      </button>
                     </div>
                   </div>
                 </>
               ) : (
-                // FORMULARIO DE RECEITA
                 <>
                   <div className="mb-10 text-center">
                     <h3 className="text-3xl font-black text-gray-900 dark:text-white">{editingRecipe ? 'Editar Receita' : 'Adicionar Nova Receita'}</h3>
@@ -536,94 +521,56 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                     <div className="space-y-6">
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Nome da Receita *</label>
-                        <input
-                          type="text"
-                          value={recipeForm.name}
-                          onChange={e => setRecipeForm({ ...recipeForm, name: e.target.value })}
-                          className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none font-bold transition-all"
-                          placeholder="Ex: Bolo de Chocolate Fit"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Imagem (URL)</label>
-                        <div className="flex gap-2">
-                          <div className="relative flex-grow">
-                            <ImageIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                            <input
-                              type="text"
-                              value={recipeForm.image}
-                              onChange={e => setRecipeForm({ ...recipeForm, image: e.target.value })}
-                              className="w-full pl-14 pr-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none font-bold transition-all"
-                              placeholder="URL da imagem do prato"
-                            />
-                          </div>
-                          <label className="cursor-pointer bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 px-4 rounded-2xl flex items-center justify-center hover:bg-gray-50 transition-all text-gray-400 hover:text-emerald-500">
-                            <input type="file" className="hidden" accept="image/*" onChange={e => handleFileUpload(e, 'recipe')} />
-                            <Plus size={24} />
-                          </label>
+                      <input
+                        type="text"
+                        value={recipeForm.name}
+                        onChange={e => setRecipeForm({ ...recipeForm, name: e.target.value })}
+                        className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 text-gray-900 dark:text-white font-bold"
+                        placeholder="Nome da receita"
+                      />
+                      <div className="flex gap-2">
+                        <div className="relative flex-grow">
+                          <ImageIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="text"
+                            value={recipeForm.image}
+                            onChange={e => setRecipeForm({ ...recipeForm, image: e.target.value })}
+                            className="w-full pl-14 pr-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 text-gray-900 dark:text-white outline-none font-bold transition-all"
+                            placeholder="Link da imagem ou upload"
+                          />
                         </div>
+                        <label className="cursor-pointer bg-emerald-600 text-white px-6 rounded-2xl flex items-center justify-center">
+                          <Plus size={24} />
+                          <input type="file" className="hidden" accept="image/*" onChange={e => handleFileUpload(e, 'recipe')} />
+                        </label>
                       </div>
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Categoria</label>
-                        <div className="relative">
-                          <Tag className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                          <select
-                            value={recipeForm.category}
-                            onChange={e => setRecipeForm({ ...recipeForm, category: e.target.value })}
-                            className="w-full pl-14 pr-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none font-bold transition-all appearance-none"
-                          >
-                            <option value="Café da Manhã">Café da Manhã</option>
-                            <option value="Almoço/Jantar">Almoço/Jantar</option>
-                            <option value="Doces Saudáveis">Doces Saudáveis</option>
-                            <option value="Lanches">Lanches</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Ingredientes (um por linha)</label>
-                        <textarea
-                          value={ingredientsText}
-                          onChange={e => setIngredientsText(e.target.value)}
-                          className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none h-[150px] resize-none font-medium"
-                          placeholder="Ex:&#10;2 ovos&#10;1 xícara de farinha de aveia..."
-                        />
-                      </div>
+                      <textarea
+                        value={ingredientsText}
+                        onChange={e => setIngredientsText(e.target.value)}
+                        className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 h-40 text-gray-900 dark:text-white font-medium"
+                        placeholder="Ingredientes (um por linha)"
+                      />
                     </div>
-                    <div className="space-y-6 flex flex-col h-full">
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Descrição / Introdução</label>
-                        <textarea
-                          value={recipeForm.description}
-                          onChange={e => setRecipeForm({ ...recipeForm, description: e.target.value })}
-                          className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none h-[100px] resize-none font-medium leading-relaxed"
-                          placeholder="Uma breve introdução sobre a receita..."
-                        />
-                      </div>
-                      <div className="flex-grow">
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Modo de Preparo (um passo por linha)</label>
-                        <textarea
-                          value={instructionsText}
-                          onChange={e => setInstructionsText(e.target.value)}
-                          className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-600 text-gray-900 dark:text-white outline-none h-[220px] resize-none font-medium leading-relaxed"
-                          placeholder="Ex:&#10;Misture tudo no liquidificador.&#10;Asse por 30min."
-                        />
-                      </div>
-                      <div className="flex gap-4 mt-auto">
-                        <button
-                          onClick={() => setIsAdding(false)}
-                          className="flex-1 py-5 rounded-2xl bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 font-black hover:bg-gray-200 dark:hover:bg-slate-600 transition-all"
-                        >
-                          Cancelar
-                        </button>
-                        <button
-                          onClick={handleSaveRecipe}
-                          disabled={isLoading}
-                          className="flex-[2] py-5 rounded-2xl bg-emerald-600 text-white font-black shadow-2xl shadow-emerald-200 dark:shadow-emerald-900/20 hover:bg-emerald-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                        >
-                          {isLoading ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} />}
-                          {editingRecipe ? 'Salvar' : 'Adicionar'}
+                    <div className="space-y-6">
+                      <select
+                        value={recipeForm.category}
+                        onChange={e => setRecipeForm({ ...recipeForm, category: e.target.value })}
+                        className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 text-gray-900 dark:text-white font-bold"
+                      >
+                        <option value="Café da Manhã">Café da Manhã</option>
+                        <option value="Almoço/Jantar">Almoço/Jantar</option>
+                        <option value="Lanches">Lanches</option>
+                      </select>
+                      <textarea
+                        value={instructionsText}
+                        onChange={e => setInstructionsText(e.target.value)}
+                        className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-slate-700 border border-gray-100 dark:border-slate-600 h-60 text-gray-900 dark:text-white font-medium"
+                        placeholder="Modo de preparo (um passo por linha)"
+                      />
+                      <div className="flex gap-4">
+                        <button onClick={() => setIsAdding(false)} className="flex-1 py-5 rounded-2xl bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 font-black">Cancelar</button>
+                        <button onClick={handleSaveRecipe} disabled={isLoading} className="flex-[2] py-5 rounded-2xl bg-emerald-600 text-white font-black shadow-xl shadow-emerald-200">
+                          {isLoading ? 'Salvando...' : 'Salvar Receita'}
                         </button>
                       </div>
                     </div>
@@ -635,7 +582,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
         )
       )}
 
-      {/* CONTENT LIST */}
       {activeTab !== 'support' && (
         <div className="bg-white dark:bg-slate-800 rounded-[40px] border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm transition-colors">
           {activeTab === 'videos' ? (
@@ -644,7 +590,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
                 <thead className="bg-gray-50/50 dark:bg-slate-700/50">
                   <tr>
                     <th className="px-10 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Aula</th>
-                    <th className="px-10 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] hidden md:table-cell">Categoria</th>
+                    <th className="px-10 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] hidden md:table-cell">Duração</th>
                     <th className="px-10 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] text-right">Ações</th>
                   </tr>
                 </thead>
@@ -653,107 +599,44 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ videos, setVideos, recipes, set
                     <tr key={video.id} className="group hover:bg-emerald-50/20 dark:hover:bg-emerald-900/10 transition-colors">
                       <td className="px-10 py-6">
                         <div className="flex items-center gap-6">
-                          <div className="w-24 h-14 rounded-xl bg-gray-100 dark:bg-slate-700 flex-shrink-0 overflow-hidden shadow-sm relative border border-white dark:border-slate-600">
-                            <img src={video.thumbnail} className="w-full h-full object-cover" alt="thumbnail" />
-                            <div className="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Play size={16} className="text-white fill-current" />
-                            </div>
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-bold text-gray-900 dark:text-white truncate max-w-[200px] md:max-w-md text-lg">{video.title}</p>
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest truncate">{video.videoUrl}</p>
-                          </div>
+                          <img src={video.thumbnail} className="w-24 h-14 rounded-xl object-cover border border-gray-100 dark:border-slate-600" alt="thumb" />
+                          <p className="font-bold text-gray-900 dark:text-white">{video.title}</p>
                         </div>
                       </td>
                       <td className="px-10 py-6 hidden md:table-cell">
-                        <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-100/50 dark:bg-emerald-900/30 px-4 py-1.5 rounded-full uppercase tracking-widest">{video.category || 'Geral'}</span>
+                        <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">{video.duration}</span>
                       </td>
                       <td className="px-10 py-6 text-right">
                         <div className="flex justify-end gap-3">
-                          <button
-                            onClick={() => handleEditVideo(video)}
-                            className="w-12 h-12 flex items-center justify-center text-gray-300 dark:text-gray-600 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-2xl transition-all"
-                          >
-                            <Edit size={22} />
-                          </button>
-                          <button
-                            onClick={() => removeVideo(video.id)}
-                            className="w-12 h-12 flex items-center justify-center text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-all"
-                          >
-                            <Trash2 size={22} />
-                          </button>
+                          <button onClick={() => handleEditVideo(video)} className="p-3 text-gray-400 hover:text-emerald-500 transition-colors"><Edit size={20} /></button>
+                          <button onClick={() => removeVideo(video.id)} className="p-3 text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={20} /></button>
                         </div>
                       </td>
                     </tr>
                   ))}
-                  {videos.length === 0 && (
-                    <tr>
-                      <td colSpan={3} className="px-10 py-24 text-center">
-                        <div className="flex flex-col items-center gap-4">
-                          <Video className="text-gray-100 dark:text-slate-700" size={64} />
-                          <p className="text-gray-400 dark:text-gray-500 font-bold">Nenhum vídeo adicionado ainda.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="bg-gray-50/50 dark:bg-slate-700/50">
-                  <tr>
-                    <th className="px-10 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Receita</th>
-                    <th className="px-10 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] hidden md:table-cell">Categoria</th>
-                    <th className="px-10 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] text-right">Ações</th>
-                  </tr>
-                </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
                   {recipes.map((recipe) => (
                     <tr key={recipe.id} className="group hover:bg-emerald-50/20 dark:hover:bg-emerald-900/10 transition-colors">
                       <td className="px-10 py-6">
                         <div className="flex items-center gap-6">
-                          <div className="w-16 h-16 rounded-xl bg-gray-100 dark:bg-slate-700 flex-shrink-0 overflow-hidden shadow-sm border border-white dark:border-slate-600">
-                            <img src={recipe.image} className="w-full h-full object-cover" alt="recipe" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-bold text-gray-900 dark:text-white truncate max-w-[200px] md:max-w-md text-lg">{recipe.name}</p>
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest truncate">{recipe.ingredients.length} Ingredientes</p>
-                          </div>
+                          <img src={recipe.image} className="w-16 h-16 rounded-xl object-cover border border-gray-100 dark:border-slate-600" alt="recipe" />
+                          <p className="font-bold text-gray-900 dark:text-white">{recipe.name}</p>
                         </div>
-                      </td>
-                      <td className="px-10 py-6 hidden md:table-cell">
-                        <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-100/50 dark:bg-emerald-900/30 px-4 py-1.5 rounded-full uppercase tracking-widest">{recipe.category}</span>
                       </td>
                       <td className="px-10 py-6 text-right">
                         <div className="flex justify-end gap-3">
-                          <button
-                            onClick={() => handleEditRecipe(recipe)}
-                            className="w-12 h-12 flex items-center justify-center text-gray-300 dark:text-gray-600 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-2xl transition-all"
-                          >
-                            <Edit size={22} />
-                          </button>
-                          <button
-                            onClick={() => removeRecipe(recipe.id)}
-                            className="w-12 h-12 flex items-center justify-center text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-all"
-                          >
-                            <Trash2 size={22} />
-                          </button>
+                          <button onClick={() => handleEditRecipe(recipe)} className="p-3 text-gray-400 hover:text-emerald-500 transition-colors"><Edit size={20} /></button>
+                          <button onClick={() => removeRecipe(recipe.id)} className="p-3 text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={20} /></button>
                         </div>
                       </td>
                     </tr>
                   ))}
-                  {recipes.length === 0 && (
-                    <tr>
-                      <td colSpan={3} className="px-10 py-24 text-center">
-                        <div className="flex flex-col items-center gap-4">
-                          <Utensils className="text-gray-100 dark:text-slate-700" size={64} />
-                          <p className="text-gray-400 dark:text-gray-500 font-bold">Nenhuma receita adicionada ainda.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>

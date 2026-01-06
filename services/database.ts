@@ -58,6 +58,8 @@ class DatabaseService {
           avatar: profile.avatar_url || '',
           goal: profile.goal || 'saude',
           weight: profile.weight?.toString() || '',
+          targetWeight: profile.target_weight || '',
+          startWeight: profile.start_weight?.toString() || profile.weight?.toString() || '',
           lastLogin: profile.last_login ? new Date(profile.last_login).getTime() : Date.now(),
           darkMode: !!profile.dark_mode,
           streak: profile.streak || 0,
@@ -129,20 +131,34 @@ class DatabaseService {
     if (profile.name !== undefined) update.name = profile.name;
     if (profile.goal !== undefined) update.goal = profile.goal;
     if (profile.weight !== undefined) update.weight = parseFloat(profile.weight || '0');
+    if (profile.targetWeight !== undefined) update.target_weight = profile.targetWeight;
+    if (profile.startWeight !== undefined) update.start_weight = parseFloat(profile.startWeight || '0');
     if (profile.darkMode !== undefined) update.dark_mode = profile.darkMode;
     if (profile.avatar !== undefined) update.avatar_url = profile.avatar;
     await supabase.from('profiles').update(update).eq('id', session.user.id);
     await this.recordActivity(session.user.id, 'profile_update', 'Atualizou informações do perfil');
   }
 
-  async uploadFile(file: File, bucket: 'avatars' | 'media'): Promise<string> {
+  async uploadFile(file: File, bucket: 'avatars' | 'images' | 'videos'): Promise<string> {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error('Sessão expirada');
+
     const fileExt = file.name.split('.').pop();
-    const fileName = `${session.user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const { error: uploadError } = await supabase.storage.from(bucket).upload(fileName, file);
-    if (uploadError) throw uploadError;
-    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(fileName);
+    const fileName = `${session.user.id}-${Date.now()}.${fileExt}`;
+    const filePath = `${session.user.id}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true
+    });
+
+    if (uploadError) {
+      console.error('Upload error details:', uploadError);
+      throw uploadError;
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
+
     await this.recordActivity(session.user.id, 'upload_image', `Upload de arquivo: ${file.name}`);
     return publicUrl;
   }
@@ -179,9 +195,11 @@ class DatabaseService {
       short_description: video.shortDescription, category: video.category,
       video_url: this.getDirectLink(video.videoUrl)
     };
-    if (video.id.length > 20) await supabase.from('video_lessons').update(payload).eq('id', video.id);
-    else {
-      await supabase.from('video_lessons').insert([payload]);
+    if (video.id && video.id.length > 20) {
+      await supabase.from('video_lessons').update(payload).eq('id', video.id);
+    } else {
+      const { error } = await supabase.from('video_lessons').insert([payload]);
+      if (error) throw error;
       const { data: { session } } = await supabase.auth.getSession();
       if (session) await this.recordActivity(session.user.id, 'upload_video', `Publicou: ${video.title}`);
     }
@@ -195,8 +213,12 @@ class DatabaseService {
       category: recipe.category, description: recipe.description,
       ingredients: recipe.ingredients, instructions: recipe.instructions, time: recipe.time
     };
-    if (recipe.id.length > 20) await supabase.from('recipes').update(payload).eq('id', recipe.id);
-    else await supabase.from('recipes').insert([payload]);
+    if (recipe.id && recipe.id.length > 20) {
+      await supabase.from('recipes').update(payload).eq('id', recipe.id);
+    } else {
+      const { error } = await supabase.from('recipes').insert([payload]);
+      if (error) throw error;
+    }
   }
 
   async deleteRecipe(id: string) { await supabase.from('recipes').delete().eq('id', id); }
@@ -233,7 +255,6 @@ class DatabaseService {
       return (favs || []).map(f => f.item_id);
     } catch (err: any) {
       console.error('toggleFavorite error:', err);
-      // Fallback return existing favorites if possible
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         const { data: favs } = await supabase.from('favorites').select('item_id').eq('user_id', session.user.id);
