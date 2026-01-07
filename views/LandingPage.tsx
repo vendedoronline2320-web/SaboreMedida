@@ -135,16 +135,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
             Coma pão, doces e pratos deliciosos do jeito certo, com ingredientes inteligentes que trabalham <strong className="text-slate-600">a favor do seu corpo</strong>.
           </p>
 
-          {/* VSL Placeholder */}
-          <div className="relative max-w-4xl mx-auto mb-8 md:mb-14 rounded-2xl md:rounded-[32px] overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.15)] border-4 md:border-[8px] border-white aspect-video bg-slate-900 group cursor-pointer hover:border-emerald-50 transition-colors duration-500">
-            <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=1200" className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-1000" alt="Video Placeholder" />
-            <div className="relative z-10 flex flex-col items-center justify-center h-full">
-              <div className="w-16 h-16 md:w-24 md:h-24 bg-white/20 backdrop-blur-md border border-white/40 rounded-full flex items-center justify-center text-white shadow-2xl group-hover:scale-110 transition-transform duration-300">
-                <Play className="fill-current ml-1 md:hidden" size={24} />
-                <Play className="fill-current ml-1 hidden md:block" size={36} />
-              </div>
-              <p className="text-white mt-4 md:mt-6 font-bold text-xs md:text-sm uppercase tracking-[0.2em] opacity-80 group-hover:opacity-100 transition-opacity">Assista a apresentação</p>
-            </div>
+          {/* VSL Video */}
+          <div className="relative max-w-4xl mx-auto mb-8 md:mb-14 rounded-2xl md:rounded-[32px] overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.15)] border-4 md:border-[8px] border-white aspect-video bg-slate-900">
+            <iframe 
+              src="https://drive.google.com/file/d/1m6lr6L5NELZuOeCcS1TeJw1zRVhv8usj/preview" 
+              className="absolute inset-0 w-full h-full"
+              allow="autoplay"
+              allowFullScreen
+            />
           </div>
 
           <button
