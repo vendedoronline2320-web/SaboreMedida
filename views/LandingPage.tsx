@@ -281,92 +281,63 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
             <p className="text-slate-500 text-lg">Histórias reais de quem já transformou o corpo e a saúde.</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 gap-10">
             {/* Testimonial 1 */}
-            <div className="bg-[#efeae2] p-6 md:p-8 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50">
-              <div className="space-y-3 font-sans text-[15px]">
-                <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm border border-slate-100 max-w-[85%] self-start relative">
-                  <p className="text-slate-800 font-bold mb-1">Maria S.</p>
-                  <p className="text-slate-800">Gente, preciso contar uma coisa...</p>
-                  <span className="text-[10px] text-slate-400 absolute bottom-1 right-2">09:30</span>
-                </div>
-                <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm border border-slate-100 max-w-[85%] self-start relative">
-                  <p className="text-slate-800">Perdi 4kg no primeiro mês só com as receitas! 😍</p>
-                  <span className="text-[10px] text-slate-400 absolute bottom-1 right-2">09:31</span>
-                </div>
-                <div className="bg-[#d9fdd3] p-3 rounded-xl rounded-tr-none shadow-sm max-w-[85%] ml-auto relative">
-                  <p className="text-slate-900">E o melhor: continuo comendo pão todo dia kkk</p>
-                  <div className="text-right mt-1 flex justify-end items-center gap-1">
-                    <span className="text-[10px] text-slate-500">09:32</span>
-                    <CheckCheck size={16} className="text-[#53bdeb]" />
-                  </div>
+            <div className="bg-[#efeae2] p-8 md:p-10 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-500">MS</div>
+                <span className="font-bold text-slate-800 text-lg">Maria S.</span>
+              </div>
+              <div className="bg-white p-5 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 max-w-[90%] self-start relative">
+                <p className="text-slate-800 leading-relaxed">Gente, preciso contar uma coisa... Perdi 4kg no primeiro mês só com as receitas! 😍</p>
+                <div className="text-right mt-2">
+                  <span className="text-[11px] text-slate-400">09:30</span>
                 </div>
               </div>
             </div>
 
             {/* Testimonial 2 */}
-            <div className="bg-[#efeae2] p-6 md:p-8 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50">
-              <div className="space-y-3 font-sans text-[15px]">
-                <div className="bg-[#d9fdd3] p-3 rounded-xl rounded-tr-none shadow-sm max-w-[85%] ml-auto relative">
-                  <p className="text-slate-900 font-bold mb-1">Ana Paula</p>
-                  <p className="text-slate-900">Amiga, aquela receita do bolo fit é surreal 😱</p>
-                  <div className="text-right mt-1 flex justify-end items-center gap-1">
-                    <span className="text-[10px] text-slate-500">14:12</span>
-                    <CheckCheck size={16} className="text-[#53bdeb]" />
-                  </div>
-                </div>
-                <div className="bg-[#d9fdd3] p-3 rounded-xl rounded-tr-none shadow-sm max-w-[85%] ml-auto relative">
-                  <p className="text-slate-900">Meu marido nem percebeu que era saudável 😉</p>
-                  <div className="text-right mt-1 flex justify-end items-center gap-1">
-                    <span className="text-[10px] text-slate-500">14:13</span>
-                    <CheckCheck size={16} className="text-[#53bdeb]" />
-                  </div>
-                </div>
-                <div className="bg-[#d9fdd3] p-3 rounded-xl rounded-tr-none shadow-sm max-w-[85%] ml-auto relative">
-                  <p className="text-slate-900">Já emagreci 3kg e ele 2kg kkkkk</p>
-                  <div className="text-right mt-1 flex justify-end items-center gap-1">
-                    <span className="text-[10px] text-slate-500">14:15</span>
-                    <CheckCheck size={16} className="text-[#53bdeb]" />
-                  </div>
+            <div className="bg-[#efeae2] p-8 md:p-10 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-500">AP</div>
+                <span className="font-bold text-slate-800 text-lg">Ana Paula</span>
+              </div>
+              <div className="bg-white p-5 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 max-w-[90%] self-start relative">
+                <p className="text-slate-800 leading-relaxed">Gente, aquela receita do bolo fit é surreal 😱 Já emagreci 3kg e o marido 2kg kkkkk</p>
+                <div className="text-right mt-2">
+                  <span className="text-[11px] text-slate-400">14:12</span>
                 </div>
               </div>
             </div>
 
             {/* Testimonial 3 */}
-            <div className="bg-[#efeae2] p-6 md:p-8 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50">
-              <div className="space-y-3 font-sans text-[15px]">
-                <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm border border-slate-100 max-w-[85%] self-start relative">
-                  <p className="text-slate-800 font-bold mb-1">Carla M.</p>
-                  <p className="text-slate-800">Finalmente algo que funciona pra mim! Já tinha desistido de dieta...</p>
-                  <span className="text-[10px] text-slate-400 absolute bottom-1 right-2">18:45</span>
-                </div>
-                <div className="bg-[#d9fdd3] p-3 rounded-xl rounded-tr-none shadow-sm max-w-[85%] ml-auto relative">
-                  <p className="text-slate-900">Em 6 semanas: -5kg e me sentindo ótima! 💚</p>
-                  <div className="text-right mt-1 flex justify-end items-center gap-1">
-                    <span className="text-[10px] text-slate-500">18:47</span>
-                    <CheckCheck size={16} className="text-[#53bdeb]" />
-                  </div>
+            <div className="bg-[#efeae2] p-8 md:p-10 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-500">CM</div>
+                <span className="font-bold text-slate-800 text-lg">Carla M.</span>
+              </div>
+              <div className="bg-white p-5 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 max-w-[90%] self-start relative">
+                <p className="text-slate-800 leading-relaxed">Finalmente algo que funciona pra mim! Já tinha desistido de dieta... Em 6 semanas: -5kg e me sentindo ótima! 💚</p>
+                <div className="text-right mt-2">
+                  <span className="text-[11px] text-slate-400">18:45</span>
                 </div>
               </div>
             </div>
 
             {/* Testimonial 4 */}
-            <div className="bg-[#efeae2] p-6 md:p-8 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50">
-              <div className="space-y-3 font-sans text-[15px]">
-                <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm border border-slate-100 max-w-[85%] self-start relative">
-                  <p className="text-slate-800 font-bold mb-1">Patricia B.</p>
-                  <p className="text-slate-800">Nunca achei que fosse possível emagrecer comendo coisas gostosas 😋</p>
-                  <span className="text-[10px] text-slate-400 absolute bottom-1 right-2">16:50</span>
-                </div>
-                <div className="bg-[#d9fdd3] p-3 rounded-xl rounded-tr-none shadow-sm max-w-[85%] ml-auto relative">
-                  <p className="text-slate-900">-8kg em 3 meses! Recomendo muito! ✨</p>
-                  <div className="text-right mt-1 flex justify-end items-center gap-1">
-                    <span className="text-[10px] text-slate-500">16:55</span>
-                    <CheckCheck size={16} className="text-[#53bdeb]" />
-                  </div>
+            <div className="bg-[#efeae2] p-8 md:p-10 rounded-[32px] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-500">PB</div>
+                <span className="font-bold text-slate-800 text-lg">Patricia B.</span>
+              </div>
+              <div className="bg-white p-5 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 max-w-[90%] self-start relative">
+                <p className="text-slate-800 leading-relaxed">Nunca achei que fosse possível emagrecer comendo coisas gostosas 😋 -8kg em 3 meses! Recomendo muito! ✨</p>
+                <div className="text-right mt-2">
+                  <span className="text-[11px] text-slate-400">16:50</span>
                 </div>
               </div>
             </div>
+          </div>
 
           </div>
         </div>
