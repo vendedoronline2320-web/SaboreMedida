@@ -470,13 +470,23 @@ class DatabaseService {
     if (user.profile.plan === 'essential') {
       // Essential has access only to common videos and support
       if (feature === 'videos' || feature === 'video') {
+        // If just checking the section access, allow it
+        if (feature === 'videos') return { hasAccess: true };
+
         if (content && (content as VideoLesson).isPremium) {
           return { hasAccess: false, reason: 'plan_required' };
         }
 
-        // Check 5 videos limit for Essential
-        const viewsCount = await this.getVideoViewsCount(user.id);
-        if (viewsCount >= 5) {
+        // Check 5 distinct videos limit for Essential
+        const viewedVideoIds = await this.getViewedVideoIds(user.id);
+
+        // If they already viewed this specific video, allow it
+        if (content && viewedVideoIds.includes((content as VideoLesson).id)) {
+          return { hasAccess: true };
+        }
+
+        // If they reached the limit of 5 distinct videos, block new ones
+        if (viewedVideoIds.length >= 5) {
           return { hasAccess: false, reason: 'limit_reached' };
         }
 
@@ -491,10 +501,11 @@ class DatabaseService {
     return { hasAccess: false, reason: 'plan_required' };
   }
 
-  async getVideoViewsCount(userId: string): Promise<number> {
+  async getViewedVideoIds(userId: string): Promise<string[]> {
     const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
-    const { count } = await supabase.from('video_views').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('viewed_at', startOfMonth.toISOString());
-    return count || 0;
+    const { data } = await supabase.from('video_views').select('video_id').eq('user_id', userId).gte('viewed_at', startOfMonth.toISOString());
+    const ids = (data || []).map(v => v.video_id);
+    return [...new Set(ids)]; // Unique IDs
   }
 
   async recordVideoView(userId: string, videoId: string) {

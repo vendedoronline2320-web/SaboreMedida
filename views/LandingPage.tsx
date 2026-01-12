@@ -136,9 +136,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
           </p>
 
           {/* VSL Video */}
-          <div className="relative max-w-4xl mx-auto mb-8 md:mb-14 rounded-2xl md:rounded-[32px] overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.15)] border-4 md:border-[8px] border-white aspect-video bg-slate-900">
-            <iframe 
-              src="https://drive.google.com/file/d/1m6lr6L5NELZuOeCcS1TeJw1zRVhv8usj/preview" 
+          <div className="relative max-w-4xl mx-auto mb-8 md:mb-14 rounded-2xl md:rounded-[32px] overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.15)] border-4 md:border-[8px] border-white aspect-[4/3] md:aspect-video bg-slate-900">
+            <iframe
+              src="https://drive.google.com/file/d/1m6lr6L5NELZuOeCcS1TeJw1zRVhv8usj/preview"
               className="absolute inset-0 w-full h-full"
               allow="autoplay"
               allowFullScreen

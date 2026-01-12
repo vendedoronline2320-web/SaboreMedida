@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ViewType, User, VideoLesson, Recipe } from './types';
 import LandingPage from './views/LandingPage';
+import CookieConsent from './views/CookieConsent';
 import LoginView from './views/LoginView';
 import DashboardView from './views/DashboardView';
 import { db } from './services/database';
@@ -85,9 +86,17 @@ const App: React.FC = () => {
     setRecipes(updatedRecipes);
   };
 
+  const [hasAcceptedCookies, setHasAcceptedCookies] = useState<boolean>(() => {
+    return localStorage.getItem('cookies-accepted') === 'true';
+  });
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
-      {view === 'landing' && (
+      {view === 'landing' && !hasAcceptedCookies && (
+        <CookieConsent onAccept={() => setHasAcceptedCookies(true)} />
+      )}
+
+      {view === 'landing' && hasAcceptedCookies && (
         <LandingPage
           onStart={() => { setView('login'); setIsRegisteringMode(true); }}
           onLogin={() => { setView('login'); setIsRegisteringMode(false); }}
