@@ -1,14 +1,25 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ShieldCheck, Cookie } from 'lucide-react';
+import { initPixel, pageView } from '../utils/pixel';
 
 interface CookieConsentProps {
     onAccept: () => void;
 }
 
 const CookieConsent: React.FC<CookieConsentProps> = ({ onAccept }) => {
-    const handleChoice = () => {
+    useEffect(() => {
+        initPixel();
+        pageView();
+    }, []);
+
+    const handleChoice = (allowed: boolean) => {
+        localStorage.setItem('cookies-consent-given', 'true');
+        localStorage.setItem('cookies-allowed', String(allowed));
+
+        // For compatibility with current App.tsx logic which waits for 'cookies-accepted'
         localStorage.setItem('cookies-accepted', 'true');
+
         onAccept();
     };
 
@@ -29,14 +40,14 @@ const CookieConsent: React.FC<CookieConsentProps> = ({ onAccept }) => {
 
                     <div className="space-y-4">
                         <button
-                            onClick={handleChoice}
+                            onClick={() => handleChoice(true)}
                             className="w-full py-4 bg-emerald-500 text-white font-bold rounded-2xl shadow-lg shadow-emerald-200 hover:bg-emerald-600 hover:scale-[1.02] active:scale-[0.98] transition-all text-base"
                         >
                             Aceitar cookies
                         </button>
 
                         <button
-                            onClick={handleChoice}
+                            onClick={() => handleChoice(false)}
                             className="w-full py-4 bg-gray-50 text-gray-400 font-bold rounded-2xl hover:text-gray-600 hover:bg-gray-100 active:scale-[0.98] transition-all text-base"
                         >
                             Recusar cookies

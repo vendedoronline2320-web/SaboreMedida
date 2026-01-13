@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronRight, CheckCircle, Play, Star, ShieldCheck, ArrowRight, Sparkles, Menu, X, Trophy, CheckCheck } from 'lucide-react';
 import { TESTIMONIALS, FAQS } from '../constants';
+import { initPixel, pageView, trackEvent } from '../utils/pixel';
 
 interface LandingPageProps {
   onStart: () => void;
@@ -11,13 +12,22 @@ interface LandingPageProps {
 const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  useEffect(() => {
+    initPixel();
+    pageView();
+    trackEvent('ViewContent');
+  }, []);
+
+  const handleLead = () => {
+    trackEvent('Lead');
+  };
+
   return (
     <div className="flex flex-col w-full">
       {/* Header */}
       <header className="fixed top-0 w-full z-50 glass border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="flex justify-between items-center h-20">
-            {/* Logo Left */}
             {/* Logo Left */}
             <div className="flex items-center gap-3 group cursor-pointer">
               <div className="w-11 h-11 bg-emerald-500 rounded-2xl flex items-center justify-center text-white font-extrabold shadow-lg shadow-emerald-200 group-hover:rotate-6 transition-transform duration-300 text-xl pb-1">
@@ -57,7 +67,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
                   Entrar
                 </button>
                 <button
-                  onClick={onStart}
+                  onClick={() => {
+                    handleLead();
+                    onStart();
+                  }}
                   className="hover-scale bg-emerald-500 text-white px-7 py-3 rounded-full text-sm font-bold premium-shadow hover:bg-emerald-600 transition-all"
                 >
                   Começar Grátis
@@ -106,6 +119,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
+                  handleLead();
                   onStart();
                 }}
                 className="w-full py-3 rounded-xl bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-200"
@@ -146,7 +160,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
           </div>
 
           <button
-            onClick={() => document.getElementById('preços')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() => {
+              handleLead();
+              document.getElementById('preços')?.scrollIntoView({ behavior: 'smooth' });
+            }}
             className="group hover-scale inline-flex items-center justify-center gap-3 bg-orange-500 md:bg-emerald-500 text-white px-8 py-3.5 md:px-12 md:py-5 rounded-xl md:rounded-full text-lg md:text-xl font-extrabold premium-shadow hover:bg-orange-600 md:hover:bg-emerald-600 transition-all w-auto max-w-[90%] md:max-w-none shadow-lg md:shadow-none"
           >
             Quero começar agora
@@ -161,7 +178,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
         </div>
       </section>
 
-      {/* Benefits Section (Image 4 - Por que funciona) */}
+      {/* Benefits Section */}
       <section id="benefícios" className="py-20 bg-[#f5f5f5]">
         <div className="max-w-3xl mx-auto px-6 text-center animate-appear">
           <span className="text-emerald-500 font-bold tracking-widest text-sm uppercase mb-4 block">POR QUE FUNCIONA</span>
@@ -194,7 +211,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
         </div>
       </section>
 
-      {/* Differential Section (Image 2 & 3 - Isso não é mais do mesmo) */}
+      {/* Differential Section */}
       <section id="método" className="py-20 bg-slate-50/50">
         <div className="max-w-3xl mx-auto px-6 text-center animate-appear">
           <span className="text-orange-500 font-bold tracking-widest text-sm uppercase mb-4 block">NOSSO DIFERENCIAL</span>
@@ -257,7 +274,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
         </div>
       </section>
 
-      {/* Comer Pão Section (Image 1) */}
+      {/* Comer Pão Section */}
       <section className="bg-black py-16">
         <div className="max-w-2xl mx-auto px-6">
           <div className="rounded-3xl p-8 md:p-12 text-center animate-appear">
@@ -272,7 +289,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
         </div>
       </section>
 
-      {/* Testimonials Section (Resultados Reais - WhatsApp Style) */}
+      {/* Testimonials Section */}
       <section id="testemunhos" className="py-24 bg-slate-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 animate-appear">
           <div className="text-center mb-16">
@@ -338,8 +355,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
               </div>
             </div>
           </div>
-
-          </div>
         </div>
       </section>
 
@@ -378,6 +393,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
               </ul>
               <a
                 href="https://pay.cakto.com.br/sqpgdf5_711359"
+                onClick={handleLead}
                 className="w-full py-6 rounded-3xl bg-slate-900 text-white font-black hover:bg-slate-800 transition-all text-center block text-lg shadow-xl animate-pulse"
               >
                 Selecionar Essencial
@@ -386,7 +402,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
 
             {/* Plan 2 - DARK MODE PREMIUM */}
             <div className="relative bg-[#0f172a] p-12 rounded-[56px] shadow-[0_60px_100px_-20px_rgba(16,185,129,0.4)] scale-105 z-10 flex flex-col border border-emerald-500/30 hover:-translate-y-2 transition-transform">
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-2.5 rounded-full text-[11px] font-black uppercase tracking-[0.25em] shadow-xl shadow-orange-500/20 whitespace-nowrap">� RECOMENDADO</div>
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-2.5 rounded-full text-[11px] font-black uppercase tracking-[0.25em] shadow-xl shadow-orange-500/20 whitespace-nowrap">🌟 RECOMENDADO</div>
 
               <div className="flex justify-between items-start mb-10">
                 <div>
@@ -421,6 +437,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
               </ul>
               <a
                 href="https://pay.cakto.com.br/yo5n39h_711365"
+                onClick={handleLead}
                 className="w-full py-6 rounded-3xl bg-emerald-500 text-white font-black hover:bg-emerald-600 transition-all text-center block text-xl shadow-[0_20px_40px_-10px_rgba(16,185,129,0.4)] animate-pulse"
               >
                 Garantir Acesso Premium
@@ -429,6 +446,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
           </div>
         </div>
       </section>
+
       {/* FAQ Simplified */}
       <section id="faq" className="py-24 bg-[#f5f5f5] border-t border-slate-200">
         <div className="max-w-3xl mx-auto px-6">
@@ -451,8 +469,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
               </details>
             ))}
           </div>
-        </div >
-      </section >
+        </div>
+      </section>
 
       {/* Guarantee Section */}
       <section className="py-24 bg-[#f5f5f5]">
@@ -494,6 +512,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
           <a
             href="https://pay.cakto.com.br/yo5n39h_711365"
             rel="noopener noreferrer"
+            onClick={handleLead}
             className="group hover-scale inline-flex items-center gap-3 bg-orange-600 text-white px-10 py-5 rounded-xl text-xl font-bold hover:bg-orange-700 transition-all shadow-xl shadow-orange-200 text-center"
           >
             Quero começar agora
@@ -537,7 +556,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin }) => {
           </div>
         </div>
       </footer>
-    </div >
+    </div>
   );
 };
 
