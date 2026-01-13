@@ -16,7 +16,7 @@ export const initPixel = () => {
   if (typeof window === 'undefined') return;
   if (window.fbq) return;
 
-  const n = (window as any).fbq = function() {
+  const n: any = (window as any).fbq = function () {
     n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
   };
   if (!window._fbq) window._fbq = n;
@@ -49,12 +49,6 @@ export const pageView = () => {
  * Only fires if user has accepted cookies.
  */
 export const trackEvent = (eventName: string, data?: any) => {
-  const consent = localStorage.getItem('cookies-allowed') === 'true';
-  if (!consent) {
-    console.log(`[Pixel] Event ${eventName} suppressed due to lack of consent.`);
-    return;
-  }
-
   if (typeof window !== 'undefined' && window.fbq) {
     window.fbq('track', eventName, data);
   }
